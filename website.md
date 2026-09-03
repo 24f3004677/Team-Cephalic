@@ -25,5 +25,5 @@
     - if the data sent by the processing unit is danger then the it will instantly send a signal to that node and then the node will start alarming
     - when click on the card then it will show the cards of nodes under that mine, its sensor data and a button for analysis,emergency alarm
     - upon clicking the analysis button the backend will show charts each sensor's data over past data
-    - upon clicking the emergency alarm it will send a signal to that node and then the node will start alarming
+    - upon clicking the emergency alarm it will send a signal to that node and then the node will start alarming.
     
