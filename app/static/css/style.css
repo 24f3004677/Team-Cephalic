@@ -1,0 +1,9 @@
+body {
+    background-color: #f8f9fa;
+}
+.card {
+    margin-bottom: 20px;
+}
+.badge {
+    font-size: 0.9em;
+}

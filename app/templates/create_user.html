@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Create User{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+	<div class="col-md-6 col-lg-4">
+		<h1>Create User</h1>
+		<form method="POST">
+		    <div class="mb-3">
+		        <label for="username" class="form-label">Username</label>
+		        <input type="text" class="form-control" id="username" name="username" required>
+		    </div>
+		    <div class="mb-3">
+		        <label for="email" class="form-label">Email</label>
+		        <input type="email" class="form-control" id="email" name="email" required>
+		    </div>
+		    <div class="mb-3">
+		        <label for="password" class="form-label">Password</label>
+		        <input type="password" class="form-control" id="password" name="password" minlength="6" required>
+		    </div>
+		    <div class="mb-3">
+		        <label for="role" class="form-label">Role</label>
+		        <select class="form-select" id="role" name="role" required>
+		            <option value="engineer">Engineer</option>
+		            <option value="supervisor">Supervisor</option>
+		        </select>
+		    </div>
+		    <button type="submit" class="btn btn-primary">Create</button>
+		    <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
+		</form>
+	</div>
+</div>
+{% endblock %}

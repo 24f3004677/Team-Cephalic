@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ mine.name }} Details{% endblock %}
+{% block content %}
+<h1>{{ mine.name }}</h1>
+<p>Location: {{ mine.location }}</p>
+<p>Workers: {{ mine.workers_count }}</p>
+<p>Status: 
+    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+        {{ mine.current_status }}
+    </span>
+</p>
+
+<h2>Nodes</h2>
+<div class="row">
+    {% for node in nodes %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ node.name }}</h5>
+                <p>{{ node.description or 'No description' }}</p>
+                <p>Status: 
+                    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                        {{ node.current_status }}
+                    </span>
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('main.node_detail', node_id=node.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    <form action="{{ url_for('main.mark_node_fixed', node_id=node.id) }}" method="post" class="d-inline">
+                        <input type="hidden" name="mine_id" value="{{ mine.id }}">
+                        <button type="submit" class="btn btn-sm btn-success" {% if node.current_status == 'normal' %}disabled{% endif %}>
+                            Fixed
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

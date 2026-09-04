@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Send Alert{% endblock %}
+{% block content %}
+<h1>Send Alert</h1>
+<form method="POST" action="{{ url_for('main.send_alert') }}">
+    <div class="mb-3">
+        <label class="form-label d-block">Target Type</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="target_type" id="type_node" value="node" checked>
+            <label class="form-check-label" for="type_node">Node</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="target_type" id="type_mine" value="mine">
+            <label class="form-check-label" for="type_mine">Mine (all nodes)</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="node_id" class="form-label">Select Node</label>
+            <select class="form-select" id="node_id" name="node_id">
+                {% for node in nodes %}
+                <option value="{{ node.id }}">{{ node.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="mine_id" class="form-label">Select Mine</label>
+            <select class="form-select" id="mine_id" name="mine_id">
+                {% for mine in mines %}
+                <option value="{{ mine.id }}">{{ mine.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="message" class="form-label">Message</label>
+        <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-danger">Send Alert</button>
+</form>
+{% endblock %}

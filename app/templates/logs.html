@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Assignments Log{% endblock %}
+{% block content %}
+<h1>Mine Assignments</h1>
+
+{% for mine in mines %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>{{ mine.name }}</h5>
+    </div>
+    <div class="card-body">
+        <h6>Assigned Engineers & Supervisors</h6>
+        {% set users = mine.users.all() %}
+        {% if users %}
+        <ul class="list-group">
+            {% for user in users %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ user.username }}
+                <span class="badge bg-secondary">{{ user.role }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No users assigned.</p>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

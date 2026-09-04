@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Create Mine{% endblock %}
+{% block content %}
+<h1>Create Mine</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <div class="mb-3">
+        <label for="location" class="form-label">Location</label>
+        <input type="text" class="form-control" id="location" name="location">
+    </div>
+    <div class="mb-3">
+        <label for="workers_count" class="form-label">Workers Count</label>
+        <input type="number" class="form-control" id="workers_count" name="workers_count" value="0">
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ node.name }}{% endblock %}
+{% block content %}
+<h1>{{ node.name }}</h1>
+<p>Description: {{ node.description or 'N/A' }}</p>
+<p>Current Status: 
+    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+        {{ node.current_status }}
+    </span>
+</p>
+<p>Mines: 
+    {% for mine in node.mines %}
+        {{ mine.name }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</p>
+
+<h3>Sensor Data (last readings)</h3>
+{% for sensor_type, data_list in sensor_data.items() %}
+    <h5>{{ sensor_type }}</h5>
+    <canvas id="chart-{{ sensor_type }}" width="400" height="200"></canvas>
+{% else %}
+    <p>No sensor data available.</p>
+{% endfor %}
+
+<h3>Analysis History</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Status</th>
+            <th>Mine</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in analysis_history %}
+        <tr>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>
+                {% if log.status == 0 %}<span class="badge bg-success">Under Control</span>
+                {% elif log.status == 1 %}<span class="badge bg-warning text-dark">Need Attention</span>
+                {% else %}<span class="badge bg-danger">Danger</span>{% endif %}
+            </td>
+            <td>{{ log.mine.name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% for sensor_type, data_list in sensor_data.items() %}
+        var ctx{{ loop.index }} = document.getElementById('chart-{{ sensor_type }}').getContext('2d');
+        new Chart(ctx{{ loop.index }}, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for d in data_list|reverse %}
+                        '{{ d.timestamp }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '{{ sensor_type }}',
+                    data: [
+                        {% for d in data_list|reverse %}
+                            {{ d.value }},
+                        {% endfor %}
+                    ],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { display: true, title: { display: true, text: 'Time' } },
+                    y: { display: true, title: { display: true, text: 'Value' } }
+                }
+            }
+        });
+    {% endfor %}
+});
+</script>
+{% endblock %}

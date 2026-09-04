@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Create Node{% endblock %}
+{% block content %}
+<h1>Create Node</h1>
+<form method="POST">
+    <div class="mb-3">
+        <label for="name" class="form-label">Node Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" class="form-control" id="description" name="description">
+    </div>
+    <div class="mb-3">
+        <label for="mines" class="form-label">Assign to Mines</label>
+        <select multiple class="form-select" id="mines" name="mines" required>
+            {% for mine in mines %}
+            <option value="{{ mine.id }}">{{ mine.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+    {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
+    {% else %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    {% endif %}
+</form>
+{% endblock %}

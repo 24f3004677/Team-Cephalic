@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Mines</h5>
+                <p class="card-text display-6">{{ total_mines }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Nodes</h5>
+                <p class="card-text display-6">{{ total_nodes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Staffs</h5>
+                <p class="card-text display-6">{{ total_users }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Workers Inside</h5>
+                <p class="card-text display-6">{{ total_workers }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2>Mines</h2>
+<div class="row">
+    {% for mine in mines %}
+    <div class="col-md-4 mb-3">
+        <div class="card {% if mine.current_status == 'danger' %}border-danger{% elif mine.current_status == 'attention' %}border-warning{% else %}border-success{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title">{{ mine.name }}</h5>
+                <p class="card-text">
+                    <strong>Location:</strong> {{ mine.location or 'N/A' }}<br>
+                    <strong>Workers:</strong> {{ mine.workers_count }}<br>
+                    <strong>Status:</strong> 
+                    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                        {{ mine.current_status }}
+                    </span>
+                </p>
+                <a href="{{ url_for('main.mine_detail', mine_id=mine.id) }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
