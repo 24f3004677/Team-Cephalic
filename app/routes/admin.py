@@ -15,9 +15,9 @@ def restrict_to_admin():
 
 @admin_bp.route('/office')
 def office():
-    users = User.query.all()
-    mines = Mine.query.all()
-    nodes = Node.query.all()
+    users = User.query.order_by(User.id.asc()).all()
+    mines = Mine.query.order_by(Mine.id.asc()).all()
+    nodes = Node.query.order_by(Node.id.asc()).all()
     return render_template('office.html', users=users, mines=mines, nodes=nodes)
 
 # User management
@@ -227,7 +227,7 @@ def edit_node(node_id):
 
         db.session.commit()
         flash(f'Node "{node.name}" updated.', 'success')
-        return redirect(url_for('admin.edit_node'))
+        return redirect(url_for('admin.office'))
 
     # GET: pre-select current mines
     mines = Mine.query.all()

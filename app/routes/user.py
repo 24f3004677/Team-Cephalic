@@ -6,6 +6,7 @@ from app.utils.decorators import role_required
 from datetime import datetime
 from app.models import node_links
 
+
 def has_mine_access(user, mine_id):
     if user.role == 'admin':
         return True
@@ -47,12 +48,13 @@ def create_node():
 
 @user_bp.route('/mine/<int:mine_id>/graph')
 @login_required
+@role_required('engineer', 'supervisor',"admin")
 def mine_graph(mine_id):
     mine = Mine.query.get_or_404(mine_id)
     if not has_mine_access(current_user, mine_id):
         abort(403)
 
-    nodes = mine.nodes.all()
+    nodes = mine.nodes  # directly iterate, no .all()
     node_data = []
     for node in nodes:
         latest_analysis = AnalysisLog.query.filter_by(node_id=node.id).order_by(AnalysisLog.timestamp.desc()).first()
@@ -66,27 +68,23 @@ def mine_graph(mine_id):
             'status': status_str
         })
 
-    # Get links where both nodes are in this mine
     node_ids = [n['id'] for n in node_data]
     links = []
     if node_ids:
-        # Query all links involving these nodes
-        from_links = db.session.query(node_links).filter(node_links.c.from_node_id.in_(node_ids)).all()
-        for link in from_links:
-            if link.to_node_id in node_ids:
-                links.append({'from': link.from_node_id, 'to': link.to_node_id})
-        # Also check reverse direction (since table is directional, we might have added only one direction)
-        to_links = db.session.query(node_links).filter(node_links.c.to_node_id.in_(node_ids)).all()
-        for link in to_links:
-            if link.from_node_id in node_ids:
-                # Avoid duplicate if already captured (though we use directional pair, but we can treat as undirected)
-                if not any(l['from'] == link.to_node_id and l['to'] == link.from_node_id for l in links):
-                    links.append({'from': link.from_node_id, 'to': link.to_node_id})
+        # Since both endpoints must be in this mine, a single query is enough
+        result = db.session.query(node_links).filter(
+            node_links.c.from_node_id.in_(node_ids),
+            node_links.c.to_node_id.in_(node_ids)
+        ).all()
+        for link in result:
+            links.append({'from': link.from_node_id, 'to': link.to_node_id})
 
     return jsonify({'nodes': node_data, 'links': links})
 
+
 @user_bp.route('/mines/map')
-@role_required('user')
+@login_required   # all authenticated users can access
+@role_required('engineer', 'supervisor',"admin")
 def mines_map():
     mines = get_accessible_mines(current_user)
     data = []
@@ -100,5 +98,3 @@ def mines_map():
                 'status': mine.current_status
             })
     return jsonify(data)
-
-

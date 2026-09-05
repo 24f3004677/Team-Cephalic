@@ -32,7 +32,7 @@ def mine_detail(mine_id):
     mine = Mine.query.get_or_404(mine_id)
     if current_user.role != 'admin' and mine not in current_user.mines:
         abort(403)
-    nodes = mine.nodes
+    nodes = sorted(mine.nodes, key=lambda node: node.id)
     return render_template('mine_detail.html', mine=mine, nodes=nodes)
 
 @main_bp.route('/node/<int:node_id>')
@@ -146,12 +146,14 @@ def mark_node_fixed(node_id):
 
 @main_bp.route('/mines/map')
 @login_required
-@role_required('admin', 'engineer', 'supervisor')
+@role_required('engineer', 'supervisor','admin')
 def mines_map():
+    # Get mines accessible to current user
     if current_user.role == 'admin':
         mines = Mine.query.all()
     else:
-        mines = current_user.mines
+        mines = current_user.mines   # list of Mine objects
+
     data = []
     for mine in mines:
         if mine.x is not None and mine.y is not None:
@@ -163,4 +165,3 @@ def mines_map():
                 'status': mine.current_status
             })
     return jsonify(data)
-    
