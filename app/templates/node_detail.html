@@ -2,19 +2,24 @@
 {% block title %}{{ node.name }}{% endblock %}
 {% block content %}
 <script src="app/static/js/chart.js"></script>
-<h1>{{ node.name }}</h1>
-<p>Description: {{ node.description or 'N/A' }}</p>
-<p>Current Status: 
-    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
-        {{ node.current_status }}
-    </span>
-</p>
-<p>Mines: 
-    {% for mine in node.mines %}
-        {{ mine.name }}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-</p>
-
+<div class="row justify-content-left">
+	<div style="background-color:lemonchiffon;padding: 20px;border-radius: 20px;" class="col-md-6 col-lg-4">
+		<h1>{{ node.name }}</h1>
+		<p>Description: {{ node.description or 'N/A' }}</p>
+		<p>Current Status: 
+		    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+		        {{ node.current_status }}
+		    </span>
+		    <br>
+		    <label>Postion:</label> {{node.x}},{{node.y}}
+		</p>
+		<p>Mines: 
+		    {% for mine in node.mines %}
+		        {{ mine.name }}{% if not loop.last %}, {% endif %}
+		    {% endfor %}
+		</p>
+	</div>
+</div>
 <h3>Sensor Data (last readings)</h3>
 {% for sensor_type, data_list in sensor_data.items() %}
     <h5>{{ sensor_type }}</h5>
