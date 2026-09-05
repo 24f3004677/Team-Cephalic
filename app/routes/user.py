@@ -4,7 +4,18 @@ from app import db
 from app.models import Mine, Node, Alert, SensorData, AnalysisLog
 from app.utils.decorators import role_required
 from datetime import datetime
+from app.models import node_links
 
+def has_mine_access(user, mine_id):
+    if user.role == 'admin':
+        return True
+    return any(mine.id == mine_id for mine in user.mines)
+
+def get_accessible_mines(user):
+    if user.role == 'admin':
+        return Mine.query.all()
+    return user.mines.all()
+    
 user_bp = Blueprint('user', __name__)
 
 @user_bp.before_request

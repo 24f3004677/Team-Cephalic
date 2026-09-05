@@ -65,14 +65,14 @@ class Mine(db.Model):
     x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
     y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
     def update_status_from_nodes(self):
-            """Recalculate mine status based on the statuses of its nodes."""
-            statuses = [node.current_status for node in self.nodes]
-            if 'danger' in statuses:
-                self.current_status = 'danger'
-            elif 'attention' in statuses:
-                self.current_status = 'attention'
-            else:
-            	self.current_status = 'normal'
+        """Recalculate mine status based on the statuses of its nodes."""
+        statuses = [node.current_status for node in self.nodes]
+        if 'danger' in statuses:
+            self.current_status = 'danger'
+        elif 'attention' in statuses:
+            self.current_status = 'attention'
+        else:
+           	self.current_status = 'normal'
     # Relationships
     nodes = db.relationship('Node', secondary=mine_nodes, backref=db.backref('mines', lazy='dynamic'))
     analysis_logs = db.relationship('AnalysisLog', backref='mine', lazy='dynamic')

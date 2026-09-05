@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ mine.name }} Details{% endblock %}
 {% block content %}
+.node-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
 <script>
     const mineId = {{ mine.id }};
     const mapContainer = document.getElementById('mine-map');
@@ -59,6 +68,14 @@
         {{ mine.current_status }}
     </span>
 </p>
+<div class="card mb-4">
+    <div class="card-header">Mine Layout</div>
+    <div class="card-body">
+        <div id="mine-map" style="position: relative; width: 100%; height: 400px; background-color: #f0f0f0; border: 1px solid #ccc;">
+            <svg id="links-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+        </div>
+    </div>
+</div>
 
 <h2>Nodes</h2>
 <div class="row">

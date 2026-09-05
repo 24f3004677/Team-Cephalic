@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort,jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Mine, Node, SensorData, AnalysisLog, Alert, User
@@ -109,7 +109,7 @@ def send_alert():
                           mine_id=mine.id)
         else:
             flash('Invalid target type', 'danger')
-            return redirect(url_for('user.send_alert'))
+            return redirect(url_for('main.send_alert'))
 
         db.session.add(alert)
         db.session.commit()
@@ -143,4 +143,24 @@ def mark_node_fixed(node_id):
     db.session.commit()
     flash(f'Node {node.name} marked as fixed', 'success')
     return redirect(url_for('main.mine_detail', mine_id=request.form.get('mine_id', type=int) or node.mines[0].id if node.mines else 'dashboard'))
+
+@main_bp.route('/mines/map')
+@login_required
+@role_required('admin', 'engineer', 'supervisor')
+def mines_map():
+    if current_user.role == 'admin':
+        mines = Mine.query.all()
+    else:
+        mines = current_user.mines
+    data = []
+    for mine in mines:
+        if mine.x is not None and mine.y is not None:
+            data.append({
+                'id': mine.id,
+                'name': mine.name,
+                'x': mine.x,
+                'y': mine.y,
+                'status': mine.current_status
+            })
+    return jsonify(data)
     
