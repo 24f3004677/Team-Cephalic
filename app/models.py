@@ -5,6 +5,15 @@ from flask_login import UserMixin
 
 db = SQLAlchemy()
 
+# Association table for node links (edges)
+node_links = db.Table(
+    'node_links',
+    db.Column('from_node_id', db.Integer, db.ForeignKey('node.id'), primary_key=True),
+    db.Column('to_node_id', db.Integer, db.ForeignKey('node.id'), primary_key=True)
+)
+
+
+
 # Association Tables
 mine_nodes = db.Table(
     'mine_nodes',
@@ -53,6 +62,8 @@ class Mine(db.Model):
     workers_count = db.Column(db.Integer, default=0)
     current_status = db.Column(db.String(20), default='normal')  # 'normal', 'attention', 'danger'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
+    y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
     def update_status_from_nodes(self):
             """Recalculate mine status based on the statuses of its nodes."""
             statuses = [node.current_status for node in self.nodes]
@@ -79,7 +90,8 @@ class Node(db.Model):
     description = db.Column(db.String(255))
     current_status = db.Column(db.String(20), default='normal')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+    x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
+    y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
     # Relationships
     sensor_data = db.relationship('SensorData', backref='node', lazy='dynamic')
     analysis_logs = db.relationship('AnalysisLog', backref='node', lazy='dynamic')

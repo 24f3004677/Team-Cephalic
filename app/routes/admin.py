@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort,jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Mine, Node
+from app.models import User, Mine, Node,node_links
 from app.utils.decorators import role_required
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -59,36 +60,48 @@ def delete_user(user_id):
     return redirect(url_for('admin.office'))
 
 # Mine management
-@admin_bp.route('/mine/create', methods=['GET', 'POST'])
+@admin_bp.route('/mines/create', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+
 def create_mine():
     if request.method == 'POST':
         name = request.form.get('name')
         location = request.form.get('location')
-        workers_count = int(request.form.get('workers_count', 0))
-        mine = Mine(name=name, location=location, workers_count=workers_count)
+        workers_count = request.form.get('workers_count', type=int, default=0)
+        x = request.form.get('x', type=float, default=None)
+        y = request.form.get('y', type=float, default=None)
+
+        mine = Mine(name=name, location=location, workers_count=workers_count, x=x, y=y)
         db.session.add(mine)
         db.session.commit()
-        flash('Mine created', 'success')
-        return redirect(url_for('admin.office'))
+        flash(f'Mine "{name}" created.', 'success')
+        return redirect(url_for('admin.list_links'))
     return render_template('create_mine.html')
 
 # Node management
-@admin_bp.route('/node/create', methods=['GET', 'POST'])
+@admin_bp.route('/nodes/create', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'engineer', 'supervisor')
 def create_node():
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
         mine_ids = request.form.getlist('mines')
-        node = Node(name=name, description=description)
+        x = request.form.get('x', type=float, default=None)
+        y = request.form.get('y', type=float, default=None)
+
+        node = Node(name=name, description=description, x=x, y=y)
         for mid in mine_ids:
             mine = Mine.query.get(int(mid))
             if mine:
                 node.mines.append(mine)
         db.session.add(node)
         db.session.commit()
-        flash('Node created', 'success')
-        return redirect(url_for('admin.office'))
-    mines = Mine.query.all()
+        flash(f'Node "{name}" created.', 'success')
+        return redirect(url_for('admin.list_links'))  # adjust as needed
+    # GET: show form
+    mines = Mine.query.all() if current_user.role == 'admin' else current_user.mines.all()
     return render_template('create_node.html', mines=mines)
 
 # Assign users to mines (engineer/supervisor)
@@ -117,3 +130,106 @@ def assign_user_to_mine():
         db.session.commit()
     return redirect(url_for('admin.office'))
 
+
+@admin_bp.route('/links/create', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def create_link():
+    if request.method == 'POST':
+        from_node_id = request.form.get('from_node_id', type=int)
+        to_node_id = request.form.get('to_node_id', type=int)
+        if from_node_id == to_node_id:
+            flash('Cannot link a node to itself.', 'danger')
+            return redirect(url_for('admin.create_link'))
+
+        # Check if link already exists (either direction)
+        existing = db.session.query(node_links).filter(
+            ((node_links.c.from_node_id == from_node_id) & (node_links.c.to_node_id == to_node_id)) |
+            ((node_links.c.from_node_id == to_node_id) & (node_links.c.to_node_id == from_node_id))
+        ).first()
+        if existing:
+            flash('Link already exists between these nodes.', 'warning')
+            return redirect(url_for('admin.create_link'))
+
+        # Insert new link
+        stmt = node_links.insert().values(from_node_id=from_node_id, to_node_id=to_node_id)
+        db.session.execute(stmt)
+        db.session.commit()
+        flash('Link created.', 'success')
+        return redirect(url_for('admin.list_links'))
+
+    nodes = Node.query.order_by(Node.name).all()
+    return render_template('create_link.html', nodes=nodes)
+
+@admin_bp.route('/links')
+@login_required
+@role_required('admin')
+def list_links():
+    links = db.session.query(node_links).all()
+    link_list = []
+    for link in links:
+        from_node = Node.query.get(link.from_node_id)
+        to_node = Node.query.get(link.to_node_id)
+        link_list.append({'from': from_node, 'to': to_node})
+    return render_template('links.html', link_list=link_list)
+
+@admin_bp.route('/mines/map')
+@role_required('admin')
+def mines_map():
+    mines = get_accessible_mines(current_user)
+    data = []
+    for mine in mines:
+        if mine.x is not None and mine.y is not None:
+            data.append({
+                'id': mine.id,
+                'name': mine.name,
+                'x': mine.x,
+                'y': mine.y,
+                'status': mine.current_status
+            })
+    return jsonify(data)
+
+@admin_bp.route('/mines/<int:mine_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def edit_mine(mine_id):
+    mine = Mine.query.get_or_404(mine_id)
+    if request.method == 'POST':
+        mine.name = request.form.get('name')
+        mine.location = request.form.get('location')
+        mine.workers_count = request.form.get('workers_count', type=int, default=0)
+        mine.x = request.form.get('x', type=float, default=None)
+        mine.y = request.form.get('y', type=float, default=None)
+        db.session.commit()
+        flash(f'Mine "{mine.name}" updated.', 'success')
+        return redirect(url_for('admin.list_links'))
+    return render_template('edit_mine.html', mine=mine)
+
+@admin_bp.route('/nodes/<int:node_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def edit_node(node_id):
+    node = Node.query.get_or_404(node_id)
+    if request.method == 'POST':
+        node.name = request.form.get('name')
+        node.description = request.form.get('description')
+        node.x = request.form.get('x', type=float, default=None)
+        node.y = request.form.get('y', type=float, default=None)
+
+        # Update mine associations
+        selected_mine_ids = request.form.getlist('mines')
+        # Clear existing associations
+        node.mines = []
+        for mid in selected_mine_ids:
+            mine = Mine.query.get(int(mid))
+            if mine:
+                node.mines.append(mine)
+
+        db.session.commit()
+        flash(f'Node "{node.name}" updated.', 'success')
+        return redirect(url_for('admin.edit_node'))
+
+    # GET: pre-select current mines
+    mines = Mine.query.all()
+    selected_ids = [mine.id for mine in node.mines]
+    return render_template('edit_node.html', node=node, mines=mines, selected_ids=selected_ids)

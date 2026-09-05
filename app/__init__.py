@@ -2,6 +2,7 @@ from flask import Flask
 from flask_login import LoginManager
 from config import Config
 
+
 # Import the shared db instance from models
 from app.models import db
 
@@ -15,6 +16,8 @@ def create_app(config_class=Config):
 
     # Initialize extensions with the app
     db.init_app(app)
+    
+    
     login_manager.init_app(app)
 
     # Import models to ensure they are registered

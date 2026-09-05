@@ -59,4 +59,40 @@
     </div>
     {% endfor %}
 </div>
+<div class="card mb-4">
+    <div class="card-header">Mine Locations</div>
+    <div class="card-body">
+        <div id="mines-map" style="position: relative; width: 100%; height: 300px; background-color: #f0f0f0; border: 1px solid #ccc;">
+            <!-- Markers will be placed here -->
+            <script>
+            function renderMineMap() {
+                fetch('/mines/map')
+                    .then(res => res.json())
+                    .then(mines => {
+                        const container = document.getElementById('mines-map');
+                        container.innerHTML = ''; // clear
+                        mines.forEach(mine => {
+                            const marker = document.createElement('div');
+                            marker.style.position = 'absolute';
+                            marker.style.left = mine.x + '%';
+                            marker.style.top = mine.y + '%';
+                            marker.style.width = '15px';
+                            marker.style.height = '15px';
+                            marker.style.borderRadius = '50%';
+                            marker.style.backgroundColor = mine.status === 'normal' ? 'green' :
+                                                           mine.status === 'attention' ? 'orange' : 'red';
+                            marker.style.transform = 'translate(-50%, -50%)';
+                            marker.title = `${mine.name} (${mine.status})`;
+                            container.appendChild(marker);
+                        });
+                    });
+            }
+            
+            // Call on page load and every 10s
+            renderMineMap();
+            setInterval(renderMineMap, 10000);
+            </script>
+        </div>
+    </div>
+</div>
 {% endblock %}

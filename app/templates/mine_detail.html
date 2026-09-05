@@ -1,6 +1,56 @@
 {% extends "base.html" %}
 {% block title %}{{ mine.name }} Details{% endblock %}
 {% block content %}
+<script>
+    const mineId = {{ mine.id }};
+    const mapContainer = document.getElementById('mine-map');
+    const svg = document.getElementById('links-svg');
+
+    function drawGraph(data) {
+        // Clear SVG
+        svg.innerHTML = '';
+        // Draw links first
+        data.links.forEach(link => {
+            const fromNode = data.nodes.find(n => n.id === link.from);
+            const toNode = data.nodes.find(n => n.id === link.to);
+            if (!fromNode || !toNode || fromNode.x == null || toNode.x == null) return;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', fromNode.x + '%');
+            line.setAttribute('y1', fromNode.y + '%');
+            line.setAttribute('x2', toNode.x + '%');
+            line.setAttribute('y2', toNode.y + '%');
+            line.setAttribute('stroke', '#666');
+            line.setAttribute('stroke-width', '2');
+            svg.appendChild(line);
+        });
+
+        // Draw nodes
+        // Remove existing node markers (but keep SVG)
+        mapContainer.querySelectorAll('.node-marker').forEach(el => el.remove());
+        data.nodes.forEach(node => {
+            if (node.x == null || node.y == null) return;
+            const marker = document.createElement('div');
+            marker.className = 'node-marker';
+            marker.style.left = node.x + '%';
+            marker.style.top = node.y + '%';
+            marker.style.backgroundColor = node.status === 'normal' ? 'green' :
+                                           node.status === 'attention' ? 'orange' : 'red';
+            marker.title = `${node.name} (${node.status})`;
+            mapContainer.appendChild(marker);
+        });
+    }
+
+    function fetchGraph() {
+        fetch(`/mine/${mineId}/graph`)
+            .then(response => response.json())
+            .then(data => drawGraph(data))
+            .catch(err => console.error('Error fetching graph:', err));
+    }
+
+    // Initial load and periodic refresh
+    fetchGraph();
+    setInterval(fetchGraph, 10000);
+</script>
 <h1>{{ mine.name }}</h1>
 <p>Location: {{ mine.location }}</p>
 <p>Workers: {{ mine.workers_count }}</p>

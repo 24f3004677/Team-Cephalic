@@ -5,26 +5,33 @@
 
 <ul class="nav nav-tabs" id="officeTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Users</button>
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Users</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="mines-tab" data-bs-toggle="tab" data-bs-target="#mines" type="button" role="tab">Mines</button>
+        <button class="nav-link" id="mines-tab" data-bs-toggle="tab" data-bs-target="#mines" type="button" role="tab" aria-controls="mines" aria-selected="false">Mines</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="nodes-tab" data-bs-toggle="tab" data-bs-target="#nodes" type="button" role="tab">Nodes</button>
+        <button class="nav-link" id="nodes-tab" data-bs-toggle="tab" data-bs-target="#nodes" type="button" role="tab" aria-controls="nodes" aria-selected="false">Nodes</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab">Assign Users</button>
+        <button class="nav-link" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab" aria-controls="assign" aria-selected="false">Assign Users</button>
     </li>
-	
+    <!-- These are not tabs; place them outside the tab list or style them differently -->
 </ul>
-<div class="tab-content mt-3">
+
+<!-- Place action links below the tabs, not inside the <ul> -->
+<div class="mt-2">
+    <a href="{{ url_for('admin.create_link') }}" class="btn btn-sm btn-outline-primary">Create Node Link</a>
+    <a href="{{ url_for('admin.list_links') }}" class="btn btn-sm btn-outline-secondary">View All Links</a>
+</div>
+
+<div class="tab-content" id="officeTabsContent">
     <!-- Users Tab -->
-    <div class="tab-pane fade show active" id="users" role="tabpanel">
-    <div class="d-flex justify-content-between mb-2">
-        <h3>Staffs</h3>
-        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Add Staff</a>
-    </div>
+    <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+        <div class="d-flex justify-content-between mb-2 mt-3">
+            <h3>Staffs</h3>
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Add Staff</a>
+        </div>
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -49,7 +56,6 @@
                     <td>
                         {% for mine in user.mines %}
                             {{ mine.name }}{% if not loop.last %}, {% endif %}
-                        
                         {% endfor %}
                     </td>
                     <td>
@@ -65,15 +71,15 @@
                         {% endif %}
                     </td>
                 </tr>
-                {%endif%}
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
     <!-- Mines Tab -->
-    <div class="tab-pane fade" id="mines" role="tabpanel">
-        <div class="d-flex justify-content-between mb-2">
+    <div class="tab-pane fade" id="mines" role="tabpanel" aria-labelledby="mines-tab">
+        <div class="d-flex justify-content-between mb-2 mt-3">
             <h3>Mines</h3>
             <a href="{{ url_for('admin.create_mine') }}" class="btn btn-primary">Add Mine</a>
         </div>
@@ -86,6 +92,7 @@
                     <th>Workers</th>
                     <th>Status</th>
                     <th>Assigned Users</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -101,6 +108,9 @@
                             {{ user.username }} ({{ user.role }}){% if not loop.last %}, {% endif %}
                         {% endfor %}
                     </td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_mine', mine_id=mine.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -108,8 +118,8 @@
     </div>
 
     <!-- Nodes Tab -->
-    <div class="tab-pane fade" id="nodes" role="tabpanel">
-        <div class="d-flex justify-content-between mb-2">
+    <div class="tab-pane fade" id="nodes" role="tabpanel" aria-labelledby="nodes-tab">
+        <div class="d-flex justify-content-between mb-2 mt-3">
             <h3>Nodes</h3>
             <a href="{{ url_for('admin.create_node') }}" class="btn btn-primary">Add Node</a>
         </div>
@@ -121,6 +131,7 @@
                     <th>Description</th>
                     <th>Mines</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -135,6 +146,9 @@
                         {% endfor %}
                     </td>
                     <td>{{ node.current_status }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_node', node_id=node.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -142,8 +156,8 @@
     </div>
 
     <!-- Assign Users Tab -->
-    <div class="tab-pane fade" id="assign" role="tabpanel">
-        <h3>Assign Engineer/Supervisor to Mine</h3>
+    <div class="tab-pane fade" id="assign" role="tabpanel" aria-labelledby="assign-tab">
+        <h3 class="mt-3">Assign Engineer/Supervisor to Mine</h3>
         <form method="POST" action="{{ url_for('admin.assign_user_to_mine') }}">
             <div class="row">
                 <div class="col-md-3">
