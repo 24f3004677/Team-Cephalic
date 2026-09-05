@@ -1,98 +1,1190 @@
 {% extends "base.html" %}
+
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
+
+<style>
+
+/* =========================================================
+   DASHBOARD MAP
+   ========================================================= */
+
+#mines-map {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+
+    background: #f4f6f8;
+
+    border: 1px solid #cfd4da;
+    border-radius: 10px;
+}
+
+
+/* Map title */
+
+.map-title {
+    position: absolute;
+
+    top: 10px;
+    left: 70px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    color: #343a40;
+
+    z-index: 20;
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+#map-grid {
+    position: absolute;
+
+    left: 60px;
+    right: 30px;
+
+    top: 40px;
+    bottom: 55px;
+
+    background-image:
+        linear-gradient(
+            #d8dde3 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            #d8dde3 1px,
+            transparent 1px
+        );
+
+    background-size: 40px 40px;
+}
+
+
+/* =========================================================
+   AXES
+   ========================================================= */
+
+.axis-y {
+    position: absolute;
+
+    left: 60px;
+    top: 40px;
+    bottom: 55px;
+
+    width: 2px;
+
+    background: #343a40;
+
+    z-index: 5;
+}
+
+
+.axis-x {
+    position: absolute;
+
+    left: 60px;
+    right: 30px;
+
+    bottom: 55px;
+
+    height: 2px;
+
+    background: #343a40;
+
+    z-index: 5;
+}
+
+
+/* =========================================================
+   AXIS LABELS
+   ========================================================= */
+
+.y-label {
+    position: absolute;
+
+    left: 10px;
+    top: 15px;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    color: #343a40;
+
+    z-index: 10;
+}
+
+
+.x-label {
+    position: absolute;
+
+    right: 10px;
+    bottom: 15px;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    color: #343a40;
+
+    z-index: 10;
+}
+
+
+/* =========================================================
+   COORDINATE NUMBERS
+   ========================================================= */
+
+.y-coordinates {
+    position: absolute;
+
+    left: 15px;
+    top: 40px;
+    bottom: 55px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    font-size: 11px;
+
+    color: #555;
+
+    z-index: 10;
+}
+
+
+.x-coordinates {
+    position: absolute;
+
+    left: 60px;
+    right: 30px;
+
+    bottom: 35px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    font-size: 11px;
+
+    color: #555;
+
+    z-index: 10;
+}
+
+
+/* =========================================================
+   MARKER AREA
+   ========================================================= */
+
+#map-markers {
+    position: absolute;
+
+    left: 60px;
+    right: 30px;
+
+    top: 40px;
+    bottom: 55px;
+
+    z-index: 30;
+}
+
+
+/* =========================================================
+   NODE MARKER
+   ========================================================= */
+
+.map-node {
+    position: absolute;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+
+    background: #198754;
+
+    border: 3px solid white;
+
+    box-shadow:
+        0 0 0 3px rgba(25, 135, 84, 0.20),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+
+    transform: translate(-50%, 50%);
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.map-node:hover {
+    transform:
+        translate(-50%, 50%)
+        scale(1.35);
+}
+
+
+/* Node label */
+
+.node-label {
+    position: absolute;
+
+    top: 20px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    white-space: nowrap;
+
+    background: #212529;
+
+    color: white;
+
+    padding: 3px 7px;
+
+    border-radius: 4px;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   WORKER MARKER
+   ========================================================= */
+
+.map-worker {
+    position: absolute;
+
+    width: 28px;
+    height: 28px;
+
+    border-radius: 50%;
+
+    background: #ffc107;
+
+    border: 2px solid white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 15px;
+
+    transform: translate(-50%, 50%);
+
+    cursor: pointer;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.3);
+
+    transition: 0.2s;
+}
+
+
+.map-worker:hover {
+    transform:
+        translate(-50%, 50%)
+        scale(1.2);
+}
+
+
+/* =========================================================
+   INFO BOX
+   ========================================================= */
+
+.map-info {
+    position: absolute;
+
+    top: 45px;
+    right: 30px;
+
+    min-width: 150px;
+
+    padding: 10px 14px;
+
+    background: rgba(33, 37, 41, 0.94);
+
+    color: white;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    z-index: 50;
+}
+
+
+.map-info strong {
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   LEGEND
+   ========================================================= */
+
+.map-legend {
+    position: absolute;
+
+    left: 75px;
+    bottom: 65px;
+
+    background: white;
+
+    padding: 8px 12px;
+
+    border-radius: 6px;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.15);
+
+    font-size: 12px;
+
+    z-index: 50;
+}
+
+
+.legend-node,
+.legend-worker {
+    display: inline-block;
+
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    margin-right: 5px;
+}
+
+
+.legend-node {
+    background: #198754;
+}
+
+
+.legend-worker {
+    background: #ffc107;
+}
+
+
+/* =========================================================
+   MINE TUNNELS
+   ========================================================= */
+
+.mine-tunnel {
+    position: absolute;
+
+    height: 8px;
+
+    background: #6c757d;
+
+    border-radius: 10px;
+
+    z-index: 3;
+
+    opacity: 0.8;
+}
+
+
+.tunnel-1 {
+    width: 35%;
+
+    left: 15%;
+    bottom: 65%;
+}
+
+
+.tunnel-2 {
+    width: 30%;
+
+    left: 40%;
+    bottom: 45%;
+
+    transform: rotate(-20deg);
+}
+
+
+.tunnel-3 {
+    width: 25%;
+
+    left: 20%;
+    bottom: 30%;
+
+    transform: rotate(15deg);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    #mines-map {
+        height: 400px;
+    }
+
+    .map-info {
+        right: 10px;
+        top: 45px;
+    }
+
+}
+
+</style>
+
+
+<!-- =========================================================
+     DASHBOARD TITLE
+     ========================================================= -->
+
 <h1>Dashboard</h1>
 
+
+<!-- =========================================================
+     SUMMARY CARDS
+     ========================================================= -->
+
 <div class="row mb-4">
-    <div class="col-md-3">
+
+
+    <!-- Mines -->
+
+    <div class="col-md-3 mb-3">
+
         <div class="card text-white bg-primary">
+
             <div class="card-body">
-                <h5 class="card-title">Mines</h5>
-                <p class="card-text display-6">{{ total_mines }}</p>
+
+                <h5 class="card-title">
+                    Mines
+                </h5>
+
+                <p class="card-text display-6">
+                    {{ total_mines }}
+                </p>
+
             </div>
+
         </div>
+
     </div>
-    <div class="col-md-3">
+
+
+    <!-- Nodes -->
+
+    <div class="col-md-3 mb-3">
+
         <div class="card text-white bg-success">
+
             <div class="card-body">
-                <h5 class="card-title">Nodes</h5>
-                <p class="card-text display-6">{{ total_nodes }}</p>
+
+                <h5 class="card-title">
+                    Nodes
+                </h5>
+
+                <p class="card-text display-6">
+                    {{ total_nodes }}
+                </p>
+
             </div>
+
         </div>
+
     </div>
-    <div class="col-md-3">
+
+
+    <!-- Staff -->
+
+    <div class="col-md-3 mb-3">
+
         <div class="card text-white bg-info">
+
             <div class="card-body">
-                <h5 class="card-title">Staffs</h5>
-                <p class="card-text display-6">{{ total_users }}</p>
+
+                <h5 class="card-title">
+                    Staffs
+                </h5>
+
+                <p class="card-text display-6">
+                    {{ total_users }}
+                </p>
+
             </div>
+
         </div>
+
     </div>
-    <div class="col-md-3">
+
+
+    <!-- Workers -->
+
+    <div class="col-md-3 mb-3">
+
         <div class="card text-white bg-warning">
+
             <div class="card-body">
-                <h5 class="card-title">Workers Inside</h5>
-                <p class="card-text display-6">{{ total_workers }}</p>
+
+                <h5 class="card-title">
+                    Workers Inside
+                </h5>
+
+                <p class="card-text display-6">
+                    {{ total_workers }}
+                </p>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
+
+<!-- =========================================================
+     MINES
+     ========================================================= -->
+
 <h2>Mines</h2>
+
 <div class="row">
+
     {% for mine in mines %}
+
     <div class="col-md-4 mb-3">
-        <div class="card {% if mine.current_status == 'danger' %}border-danger{% elif mine.current_status == 'attention' %}border-warning{% else %}border-success{% endif %}">
+
+        <div class="card
+            {% if mine.current_status == 'danger' %}
+                border-danger
+            {% elif mine.current_status == 'warning' %}
+                border-warning
+            {% else %}
+                border-success
+            {% endif %}
+        ">
+
             <div class="card-body">
-                <h5 class="card-title">{{ mine.name }}</h5>
+
+                <h5 class="card-title">
+                    {{ mine.name }}
+                </h5>
+
                 <p class="card-text">
-                    <strong>Location:</strong> {{ mine.location or 'N/A' }}<br>
-                    <strong>Workers:</strong> {{ mine.workers_count }}<br>
-                    <strong>Status:</strong> 
-                    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+
+                    <strong>Location:</strong>
+                    {{ mine.location or 'N/A' }}
+
+                    <br>
+
+                    <strong>Workers:</strong>
+                    {{ mine.workers_count }}
+
+                    <br>
+
+                    <strong>Status:</strong>
+
+                    <span class="badge
+                        {% if mine.current_status == 'danger' %}
+                            bg-danger
+                        {% elif mine.current_status == 'warning' %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-success
+                        {% endif %}
+                    ">
                         {{ mine.current_status }}
                     </span>
+
                 </p>
-                <a href="{{ url_for('main.mine_detail', mine_id=mine.id) }}" class="btn btn-sm btn-primary">View Details</a>
+
+
+                <a
+                    href="{{ url_for('main.mine_detail', mine_id=mine.id) }}"
+                    class="btn btn-sm btn-primary"
+                >
+                    View Details
+                </a>
+
             </div>
+
         </div>
+
     </div>
+
     {% endfor %}
+
 </div>
+
+
+<!-- =========================================================
+     MINE X-Y MAP
+     ========================================================= -->
+
 <div class="card mb-4">
-    <div class="card-header">Mine Locations</div>
-    <div class="card-body">
-        <div id="mines-map" style="position: relative; width: 100%; height: 300px; background-color: #f0f0f0; border: 1px solid #ccc;">
-            <!-- Markers will be placed here -->
-            <script>
-            function renderMineMap() {
-                fetch('/mines/map')
-                    .then(res => res.json())
-                    .then(mines => {
-                        const container = document.getElementById('mines-map');
-                        container.innerHTML = ''; // clear
-                        mines.forEach(mine => {
-                            const marker = document.createElement('div');
-                            marker.style.position = 'absolute';
-                            marker.style.left = mine.x + '%';
-                            marker.style.top = mine.y + '%';
-                            marker.style.width = '15px';
-                            marker.style.height = '15px';
-                            marker.style.borderRadius = '50%';
-                            marker.style.backgroundColor = mine.status === 'normal' ? 'green' :
-                                                           mine.status === 'attention' ? 'orange' : 'red';
-                            marker.style.transform = 'translate(-50%, -50%)';
-                            marker.title = `${mine.name} (${mine.status})`;
-                            container.appendChild(marker);
-                        });
-                    });
-            }
-            
-            // Call on page load and every 10s
-            renderMineMap();
-            setInterval(renderMineMap, 10000);
-            </script>
-        </div>
+
+    <!-- Map Header -->
+
+    <div class="card-header">
+
+        <strong>Mine Locations</strong>
+
     </div>
+
+
+    <!-- Map Body -->
+
+    <div class="card-body">
+
+        <div id="mines-map">
+
+
+            <!-- Map Title -->
+
+            <div class="map-title">
+                MINE X-Y POSITION MAP
+            </div>
+
+
+            <!-- Y Axis -->
+
+            <div class="y-label">
+                Y AXIS
+            </div>
+
+
+            <!-- X Axis -->
+
+            <div class="x-label">
+                X AXIS
+            </div>
+
+
+            <!-- Grid -->
+
+            <div id="map-grid"></div>
+
+
+            <!-- Axes -->
+
+            <div class="axis-y"></div>
+
+            <div class="axis-x"></div>
+
+
+            <!-- Y Coordinates -->
+
+            <div class="y-coordinates">
+
+                <span>100</span>
+                <span>75</span>
+                <span>50</span>
+                <span>25</span>
+                <span>0</span>
+
+            </div>
+
+
+            <!-- X Coordinates -->
+
+            <div class="x-coordinates">
+
+                <span>0</span>
+                <span>25</span>
+                <span>50</span>
+                <span>75</span>
+                <span>100</span>
+
+            </div>
+
+
+            <!-- Example mine tunnels -->
+
+            <div class="mine-tunnel tunnel-1"></div>
+
+            <div class="mine-tunnel tunnel-2"></div>
+
+            <div class="mine-tunnel tunnel-3"></div>
+
+
+            <!-- Dynamic markers -->
+
+            <div id="map-markers"></div>
+
+
+            <!-- Information box -->
+
+            <div id="map-info" class="map-info">
+
+                <strong>Mine Map</strong>
+
+                <br>
+
+                Click a node to see details.
+
+            </div>
+
+
+            <!-- Legend -->
+
+            <div class="map-legend">
+
+                <div>
+
+                    <span class="legend-node"></span>
+
+                    Node
+
+                </div>
+
+                <div>
+
+                    <span class="legend-worker"></span>
+
+                    Worker
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
 </div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+function renderMineMap() {
+
+    console.log("Loading mine map...");
+
+
+    fetch("/mines/map")
+
+        .then(function(response) {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Failed to fetch /mines/map"
+                );
+
+            }
+
+            return response.json();
+
+        })
+
+
+        .then(function(data) {
+
+            console.log("Mine map data:", data);
+
+
+            const markers =
+                document.getElementById("map-markers");
+
+
+            const info =
+                document.getElementById("map-info");
+
+
+            markers.innerHTML = "";
+
+
+            /*
+             * The API may return:
+             *
+             * [
+             *   {
+             *      x: 20,
+             *      y: 70,
+             *      name: "Node 1"
+             *   }
+             * ]
+             *
+             * or:
+             *
+             * {
+             *   mines: [...]
+             * }
+             */
+
+
+            let mines = data;
+
+
+            if (!Array.isArray(data)) {
+
+                if (Array.isArray(data.mines)) {
+
+                    mines = data.mines;
+
+                }
+
+                else if (Array.isArray(data.nodes)) {
+
+                    mines = data.nodes;
+
+                }
+
+                else {
+
+                    mines = [];
+
+                }
+
+            }
+
+
+            if (mines.length === 0) {
+
+                console.log(
+                    "No map coordinates received."
+                );
+
+                info.innerHTML =
+                    "<strong>Mine Map</strong><br>" +
+                    "No node coordinates available.";
+
+                return;
+
+            }
+
+
+            /*
+             * Create markers
+             */
+
+            mines.forEach(function(item, index) {
+
+
+                /*
+                 * Support different field names.
+                 */
+
+                const x = Number(
+                    item.x ??
+                    item.x_coordinate ??
+                    item.pos_x ??
+                    0
+                );
+
+
+                const y = Number(
+                    item.y ??
+                    item.y_coordinate ??
+                    item.pos_y ??
+                    0
+                );
+
+
+                const name =
+                    item.name ||
+                    item.node_name ||
+                    item.node_id ||
+                    "Node " + (index + 1);
+
+
+                const status =
+                    item.status ||
+                    item.current_status ||
+                    "Online";
+
+
+                /*
+                 * Keep X and Y
+                 * between 0 and 100.
+                 */
+
+                const xPosition =
+                    Math.max(
+                        0,
+                        Math.min(100, x)
+                    );
+
+
+                const yPosition =
+                    Math.max(
+                        0,
+                        Math.min(100, y)
+                    );
+
+
+                /*
+                 * Create marker
+                 */
+
+                const marker =
+                    document.createElement("div");
+
+
+                marker.className =
+                    "map-node";
+
+
+                marker.style.left =
+                    xPosition + "%";
+
+
+                marker.style.bottom =
+                    yPosition + "%";
+
+
+                /*
+                 * Marker label
+                 */
+
+                const label =
+                    document.createElement("span");
+
+
+                label.className =
+                    "node-label";
+
+
+                label.innerText =
+                    name;
+
+
+                marker.appendChild(label);
+
+
+                /*
+                 * Click event
+                 */
+
+                marker.addEventListener(
+                    "click",
+                    function() {
+
+                        info.innerHTML =
+
+                            "<strong>" +
+                            name +
+                            "</strong>" +
+
+                            "<br>" +
+
+                            "X: " +
+                            x +
+
+                            "<br>" +
+
+                            "Y: " +
+                            y +
+
+                            "<br>" +
+
+                            "Status: " +
+                            status;
+
+                    }
+                );
+
+
+                /*
+                 * Add marker to map
+                 */
+
+                markers.appendChild(marker);
+
+            });
+
+        })
+
+
+        .catch(function(error) {
+
+            console.error(
+                "Map error:",
+                error
+            );
+
+
+            /*
+             * Show demo markers if
+             * backend is not ready.
+             *
+             * This helps us test the UI.
+             */
+
+            createDemoMarkers();
+
+        });
+
+}
+
+
+/* =========================================================
+   DEMO MARKERS
+   ========================================================= */
+
+function createDemoMarkers() {
+
+    const markers =
+        document.getElementById("map-markers");
+
+
+    const info =
+        document.getElementById("map-info");
+
+
+    markers.innerHTML = "";
+
+
+    /*
+     * Demo Node 1
+     */
+
+    createNode(
+        markers,
+        info,
+        "Node 1",
+        20,
+        70,
+        "Online"
+    );
+
+
+    /*
+     * Demo Node 2
+     */
+
+    createNode(
+        markers,
+        info,
+        "Node 2",
+        65,
+        45,
+        "Online"
+    );
+
+
+    /*
+     * Demo Node 3
+     */
+
+    createNode(
+        markers,
+        info,
+        "Node 3",
+        40,
+        25,
+        "Warning"
+    );
+
+}
+
+
+/* =========================================================
+   CREATE NODE
+   ========================================================= */
+
+function createNode(
+    container,
+    info,
+    name,
+    x,
+    y,
+    status
+) {
+
+    const marker =
+        document.createElement("div");
+
+
+    marker.className =
+        "map-node";
+
+
+    marker.style.left =
+        x + "%";
+
+
+    marker.style.bottom =
+        y + "%";
+
+
+    const label =
+        document.createElement("span");
+
+
+    label.className =
+        "node-label";
+
+
+    label.innerText =
+        name;
+
+
+    marker.appendChild(label);
+
+
+    marker.addEventListener(
+        "click",
+        function() {
+
+            info.innerHTML =
+
+                "<strong>" +
+                name +
+                "</strong>" +
+
+                "<br>" +
+
+                "X: " +
+                x +
+
+                "<br>" +
+
+                "Y: " +
+                y +
+
+                "<br>" +
+
+                "Status: " +
+                status;
+
+        }
+    );
+
+
+    container.appendChild(marker);
+
+}
+
+
+/* =========================================================
+   START MAP
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        renderMineMap();
+
+    }
+);
+
+</script>
+
 {% endblock %}
