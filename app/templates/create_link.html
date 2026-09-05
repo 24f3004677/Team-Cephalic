@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create Node Link</h2>
+<form method="POST">
+    <div class="form-group">
+        <label>From Node</label>
+        <select name="from_node_id" class="form-control" required>
+            {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node.name }} (ID: {{ node.id }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label>To Node</label>
+        <select name="to_node_id" class="form-control" required>
+            {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node.name }} (ID: {{ node.id }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Link</button>
+</form>
+{% endblock %}

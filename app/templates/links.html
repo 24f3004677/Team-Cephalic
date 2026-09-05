@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Existing Node Links</h2>
+    <table class="table table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>From Node</th>
+                <th>To Node</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in link_list %}
+            <tr>
+                <td>{{ link.from.name if link.from else 'Unknown' }}</td>
+                <td>{{ link.to.name if link.to else 'Unknown' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2">No links found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('admin.create_link') }}" class="btn btn-primary">Create New Link</a>
+</div>
+{% endblock %}
