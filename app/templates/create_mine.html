@@ -13,7 +13,7 @@
     </div>
     <div class="mb-3">
         <label for="workers_count" class="form-label">Workers Count</label>
-        <input type="number" class="form-control" id="workers_count" name="workers_count" value="0">
+        <input type="number" class="form-control" id="workers_count" name="workers_count" minlength="1">
     </div>
     <button type="submit" class="btn btn-primary">Create</button>
     <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>

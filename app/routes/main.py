@@ -56,7 +56,7 @@ def node_detail(node_id):
 @login_required
 def logs():
     if current_user.role == 'admin':
-        mines = Mine.query.all()
+        mines = Mine.query.order_by(Mine.id.asc()).all()
     else:
         mines = current_user.mines
     return render_template('logs.html', mines=mines)
