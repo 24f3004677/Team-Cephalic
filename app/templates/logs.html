@@ -1,29 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Assignments Log{% endblock %}
 {% block content %}
-<h1>Mine Assignments</h1>
+<h1><i class="fas fa-clipboard-list me-2 text-primary"></i>Mine Assignments</h1>
 
-{% for mine in mines %}
-<div class="card mb-3">
-    <div class="card-header">
-        <h5>{{ mine.name }}</h5>
+<div class="row g-4">
+    {% for mine in mines %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                <span><i class="fas fa-mine me-2"></i>{{ mine.name }}</span>
+                <span class="badge bg-secondary">{{ mine.users.count() }} assigned</span>
+            </div>
+            <div class="card-body">
+                {% set users = mine.users.all() %}
+                {% if users %}
+                <ul class="list-group list-group-flush">
+                    {% for user in users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-user-circle me-2"></i>{{ user.username }}</span>
+                        <span class="badge bg-info">{{ user.role }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted"><i class="fas fa-info-circle me-1"></i>No users assigned.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <h6>Assigned Engineers & Supervisors</h6>
-        {% set users = mine.users.all() %}
-        {% if users %}
-        <ul class="list-group">
-            {% for user in users %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ user.username }}
-                <span class="badge bg-secondary">{{ user.role }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-muted">No users assigned.</p>
-        {% endif %}
-    </div>
+    {% endfor %}
 </div>
-{% endfor %}
 {% endblock %}

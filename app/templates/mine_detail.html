@@ -1,64 +1,69 @@
 {% extends "base.html" %}
 {% block title %}{{ mine.name }} Details{% endblock %}
 {% block content %}
-
-<style>
-    .node-marker {
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: 2px solid #fff;
-        transform: translate(-50%, -50%);
-        cursor: pointer;
-        box-shadow: 0 0 5px rgba(0,0,0,0.3);
-    }
-    #mine-map {
-        background-image: linear-gradient(#ddd 1px, transparent 1px),
-                          linear-gradient(90deg, #ddd 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-</style>
-
-<h1>{{ mine.name }}</h1>
-<p>Location: {{ mine.location }}</p>
-<p>Workers: {{ mine.workers_count }}</p>
-<p>Status: 
-    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-mine me-2 text-primary"></i>{{ mine.name }}</h1>
+    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %} fs-5">
         {{ mine.current_status }}
     </span>
-</p>
+</div>
 
-<!-- Node Graph Map -->
-<div class="card mb-4">
-    <div class="card-header">Mine Layout (Nodes & Links)</div>
-    <div class="card-body">
-        <div id="mine-map" style="position: relative; width: 100%; height: 400px; background-color: #f0f0f0; border: 1px solid #ccc; overflow: hidden;">
-            <svg id="links-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
-            <!-- Node markers will be appended here by JavaScript -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Details</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-map-pin me-2 text-muted"></i>Location</span>
+                        <span>{{ mine.location or 'Not specified' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-user-hard-hat me-2 text-muted"></i>Workers</span>
+                        <span>{{ mine.workers_count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-clock me-2 text-muted"></i>Created</span>
+                        <span>{{ mine.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-network me-2"></i>Node Layout</h5>
+                <div id="mine-map" style="position: relative; width: 100%; height: 200px; background-color: #f0f4f8; border-radius: 8px; overflow: hidden;">
+                    <svg id="links-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+                    <!-- Node markers appended by JS -->
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<h2>Nodes</h2>
-<div class="row">
+<h2 class="mb-3"><i class="fas fa-cubes me-2 text-primary"></i>Nodes</h2>
+<div class="row g-4">
     {% for node in nodes %}
-    <div class="col-md-4 mb-3">
-        <div class="card">
+    <div class="col-md-4">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">{{ node.name }}</h5>
-                <p>{{ node.description or 'No description' }}</p>
-                <p>Status: 
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title">{{ node.name }}</h5>
                     <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
                         {{ node.current_status }}
                     </span>
-                </p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <a href="{{ url_for('main.node_detail', node_id=node.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+                <p class="card-text small text-muted">{{ node.description or 'No description' }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <a href="{{ url_for('main.node_detail', node_id=node.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i> View
+                    </a>
                     <form action="{{ url_for('main.mark_node_fixed', node_id=node.id) }}" method="post" class="d-inline">
                         <input type="hidden" name="mine_id" value="{{ mine.id }}">
-                        <button type="submit" class="btn btn-sm btn-success" {% if node.current_status == 'normal' %}disabled{% endif %}>
-                            Fixed
+                        <button type="submit" class="btn btn-success btn-sm" {% if node.current_status == 'normal' %}disabled{% endif %}>
+                            <i class="fas fa-check"></i> Fixed
                         </button>
                     </form>
                 </div>
@@ -67,62 +72,58 @@
     </div>
     {% endfor %}
 </div>
+<br><br>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-    // Wait for DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        const mineId = {{ mine.id }};
-        const mapContainer = document.getElementById('mine-map');
-        const svg = document.getElementById('links-svg');
+document.addEventListener('DOMContentLoaded', function() {
+    const mineId = {{ mine.id }};
+    const mapContainer = document.getElementById('mine-map');
+    const svg = document.getElementById('links-svg');
 
-        function drawGraph(data) {
-            // Clear SVG
-            svg.innerHTML = '';
-            // Draw links
-            data.links.forEach(link => {
-                const fromNode = data.nodes.find(n => n.id === link.from);
-                const toNode = data.nodes.find(n => n.id === link.to);
-                if (!fromNode || !toNode || fromNode.x == null || toNode.x == null) return;
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', fromNode.x + '%');
-                line.setAttribute('y1', fromNode.y + '%');
-                line.setAttribute('x2', toNode.x + '%');
-                line.setAttribute('y2', toNode.y + '%');
-                line.setAttribute('stroke', '#666');
-                line.setAttribute('stroke-width', '2');
-                svg.appendChild(line);
-            });
+    function drawGraph(data) {
+        svg.innerHTML = '';
+        data.links.forEach(link => {
+            const fromNode = data.nodes.find(n => n.id === link.from);
+            const toNode = data.nodes.find(n => n.id === link.to);
+            if (!fromNode || !toNode || fromNode.x == null || toNode.x == null) return;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', fromNode.x + '%');
+            line.setAttribute('y1', fromNode.y + '%');
+            line.setAttribute('x2', toNode.x + '%');
+            line.setAttribute('y2', toNode.y + '%');
+            line.setAttribute('stroke', '#6c757d');
+            line.setAttribute('stroke-width', '2');
+            svg.appendChild(line);
+        });
 
-            // Remove existing markers
-            mapContainer.querySelectorAll('.node-marker').forEach(el => el.remove());
-            // Draw nodes
-            data.nodes.forEach(node => {
-                if (node.x == null || node.y == null) return;
-                const marker = document.createElement('div');
-                marker.className = 'node-marker';
-                marker.style.left = node.x + '%';
-                marker.style.top = node.y + '%';
-                marker.style.backgroundColor = node.status === 'normal' ? 'green' :
-                                               node.status === 'attention' ? 'orange' : 'red';
-                marker.title = `${node.name} (${node.status})`;
-                mapContainer.appendChild(marker);
-            });
-        }
+        mapContainer.querySelectorAll('.node-marker').forEach(el => el.remove());
+        data.nodes.forEach(node => {
+            if (node.x == null || node.y == null) return;
+            const marker = document.createElement('div');
+            marker.className = 'node-marker';
+            marker.style.left = node.x + '%';
+            marker.style.top = node.y + '%';
+            marker.style.backgroundColor = node.status === 'normal' ? '#198754' :
+                                           node.status === 'attention' ? '#ffc107' : '#dc3545';
+            marker.title = `${node.name} (${node.status})`;
+            mapContainer.appendChild(marker);
+        });
+    }
 
-        function fetchGraph() {
-            // Correct URL includes the blueprint prefix '/user'
-            fetch(`/user/mine/${mineId}/graph`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => drawGraph(data))
-                .catch(err => console.error('Error fetching graph:', err));
-        }
+    function fetchGraph() {
+        fetch(`/user/mine/${mineId}/graph`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => drawGraph(data))
+            .catch(err => console.error('Error fetching graph:', err));
+    }
 
-        // Initial load and periodic refresh every 10 seconds
-        fetchGraph();
-        setInterval(fetchGraph, 10000);
-    });
+    fetchGraph();
+    setInterval(fetchGraph, 10000);
+});
 </script>
 {% endblock %}

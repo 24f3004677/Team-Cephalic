@@ -1,59 +1,98 @@
 {% extends "base.html" %}
 {% block title %}{{ node.name }}{% endblock %}
 {% block content %}
-<script src="app/static/js/chart.js"></script>
-<div class="row justify-content-left">
-	<div style="background-color:lemonchiffon;padding: 20px;border-radius: 20px;" class="col-md-6 col-lg-4">
-		<h1>{{ node.name }}</h1>
-		<p>Description: {{ node.description or 'N/A' }}</p>
-		<p>Current Status: 
-		    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
-		        {{ node.current_status }}
-		    </span>
-		    <br>
-		    <label>Postion:</label> {{node.x}},{{node.y}}
-		</p>
-		<p>Mines: 
-		    {% for mine in node.mines %}
-		        {{ mine.name }}{% if not loop.last %}, {% endif %}
-		    {% endfor %}
-		</p>
-	</div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-microchip me-2 text-primary"></i>{{ node.name }}</h1>
+    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %} fs-5">
+        {{ node.current_status }}
+    </span>
 </div>
-<h3>Sensor Data (last readings)</h3>
-{% for sensor_type, data_list in sensor_data.items() %}
-    <h5>{{ sensor_type }}</h5>
-    <canvas id="chart-{{ sensor_type }}" width="400" height="200"></canvas>
-{% else %}
-    <p>No sensor data available.</p>
-{% endfor %}
 
-<h3>Analysis History</h3>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Timestamp</th>
-            <th>Status</th>
-            <th>Mine</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for log in analysis_history %}
-        <tr>
-            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-            <td>
-                {% if log.status == 0 %}<span class="badge bg-success">Under Control</span>
-                {% elif log.status == 1 %}<span class="badge bg-warning text-dark">Need Attention</span>
-                {% else %}<span class="badge bg-danger">Danger</span>{% endif %}
-            </td>
-            <td>{{ log.mine.name }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Node Information</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Description</span>
+                        <span>{{ node.description or 'N/A' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Position</span>
+                        <span>X: {{ node.x or 'N/A' }}, Y: {{ node.y or 'N/A' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Mines</span>
+                        <span>
+                            {% for mine in node.mines %}
+                                {{ mine.name }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-clock me-2"></i>Created</h5>
+                <p class="display-6">{{ node.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Sensor Data (last readings)</h3>
+<div class="row g-4">
+    {% for sensor_type, data_list in sensor_data.items() %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">{{ sensor_type }}</div>
+            <div class="card-body">
+                <canvas id="chart-{{ sensor_type }}" width="100%" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No sensor data available.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<h3 class="mt-5 mb-3"><i class="fas fa-history me-2 text-primary"></i>Analysis History</h3>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Mine</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in analysis_history %}
+            <tr>
+                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    {% if log.status == 0 %}<span class="badge bg-success">Under Control</span>
+                    {% elif log.status == 1 %}<span class="badge bg-warning text-dark">Need Attention</span>
+                    {% else %}<span class="badge bg-danger">Danger</span>{% endif %}
+                </td>
+                <td>{{ log.mine.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     {% for sensor_type, data_list in sensor_data.items() %}
@@ -73,15 +112,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             {{ d.value }},
                         {% endfor %}
                     ],
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.1)',
+                    tension: 0.3,
+                    fill: true,
                 }]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
                 scales: {
-                    x: { display: true, title: { display: true, text: 'Time' } },
-                    y: { display: true, title: { display: true, text: 'Value' } }
+                    x: { display: true, title: { display: false } },
+                    y: { display: true, title: { display: false } }
                 }
             }
         });

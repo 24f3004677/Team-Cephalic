@@ -1,218 +1,263 @@
 {% extends "base.html" %}
 {% block title %}Office (Admin){% endblock %}
 {% block content %}
-<h1>Office</h1>
+<h1><i class="fas fa-building me-2 text-primary"></i>Office</h1>
+
+<!-- Action Buttons above tabs -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <a href="{{ url_for('admin.create_link') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-link"></i> Create Node Link
+    </a>
+    <a href="{{ url_for('admin.list_links') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-list"></i> View All Links
+    </a>
+</div>
 
 <ul class="nav nav-tabs" id="officeTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Users</button>
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+            <i class="fas fa-users me-1"></i>Users
+        </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="mines-tab" data-bs-toggle="tab" data-bs-target="#mines" type="button" role="tab" aria-controls="mines" aria-selected="false">Mines</button>
+        <button class="nav-link" id="mines-tab" data-bs-toggle="tab" data-bs-target="#mines" type="button" role="tab">
+            <i class="fas fa-mine me-1"></i>Mines
+        </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="nodes-tab" data-bs-toggle="tab" data-bs-target="#nodes" type="button" role="tab" aria-controls="nodes" aria-selected="false">Nodes</button>
+        <button class="nav-link" id="nodes-tab" data-bs-toggle="tab" data-bs-target="#nodes" type="button" role="tab">
+            <i class="fas fa-microchip me-1"></i>Nodes
+        </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab" aria-controls="assign" aria-selected="false">Assign Users</button>
+        <button class="nav-link" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab">
+            <i class="fas fa-user-plus me-1"></i>Assign Users
+        </button>
     </li>
-    <!-- These are not tabs; place them outside the tab list or style them differently -->
 </ul>
 
-<!-- Place action links below the tabs, not inside the <ul> -->
-<div class="mt-2">
-    <a href="{{ url_for('admin.create_link') }}" class="btn btn-sm btn-outline-primary">Create Node Link</a>
-    <a href="{{ url_for('admin.list_links') }}" class="btn btn-sm btn-outline-secondary">View All Links</a>
-</div>
-
 <div class="tab-content" id="officeTabsContent">
+
     <!-- Users Tab -->
-    <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
-        <div class="d-flex justify-content-between mb-2 mt-3">
-            <h3>Staffs</h3>
-            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Add Staff</a>
+    <div class="tab-pane fade show active" id="users" role="tabpanel">
+        <div class="section-header">
+            <h3><i class="fas fa-user-cog me-2 text-secondary"></i>Staff</h3>
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Add Staff
+            </a>
         </div>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Blacklisted</th>
-                    <th>Assigned Mines</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                {% if user.role!='admin'%}
-                <tr>
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.role }}</td>
-                    <td>{{ 'Yes' if user.is_blacklisted else 'No' }}</td>
-                    <td>
-                        {% for mine in user.mines %}
-                            {{ mine.name }}{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('admin.blacklist_user', user_id=user.id) }}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-{% if user.is_blacklisted %}success{% else %}warning{% endif %}">
-                                {% if user.is_blacklisted %}Unblacklist{% else %}Blacklist{% endif %}
-                            </button>
-                        </form>
-                        {% if user.role != 'admin' %}
-                        <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }}?')">Delete</button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Blacklisted</th>
+                        <th>Assigned Mines</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    {% if user.role != 'admin' %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td><span class="badge bg-secondary">{{ user.role }}</span></td>
+                        <td>
+                            {% if user.is_blacklisted %}
+                            <span class="badge bg-danger">Yes</span>
+                            {% else %}
+                            <span class="badge bg-success">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% for mine in user.mines %}
+                                {{ mine.name }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <form action="{{ url_for('admin.blacklist_user', user_id=user.id) }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm {% if user.is_blacklisted %}btn-success{% else %}btn-warning{% endif %}">
+                                    {% if user.is_blacklisted %}<i class="fas fa-check"></i> Unblacklist{% else %}<i class="fas fa-ban"></i> Blacklist{% endif %}
+                                </button>
+                            </form>
+                            {% if user.role != 'admin' %}
+                            <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }}?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Mines Tab -->
-    <div class="tab-pane fade" id="mines" role="tabpanel" aria-labelledby="mines-tab">
-        <div class="d-flex justify-content-between mb-2 mt-3">
-            <h3>Mines</h3>
-            <a href="{{ url_for('admin.create_mine') }}" class="btn btn-primary">Add Mine</a>
+    <div class="tab-pane fade" id="mines" role="tabpanel">
+        <div class="section-header">
+            <h3><i class="fas fa-mine me-2 text-secondary"></i>Mines</h3>
+            <a href="{{ url_for('admin.create_mine') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Add Mine
+            </a>
         </div>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Workers</th>
-                    <th>Status</th>
-                    <th>Assigned Users</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mine in mines %}
-                <tr>
-                    <td>{{ mine.id }}</td>
-                    <td>{{ mine.name }}</td>
-                    <td>{{ mine.location }}</td>
-                    <td>{{ mine.workers_count }}</td>
-                    <td>{{ mine.current_status }}</td>
-                    <td>
-                        {% for user in mine.users %}
-                            {{ user.username }} ({{ user.role }}){% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('admin.edit_mine', mine_id=mine.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Workers</th>
+                        <th>Status</th>
+                        <th>Assigned Users</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mine in mines %}
+                    <tr>
+                        <td>{{ mine.id }}</td>
+                        <td>{{ mine.name }}</td>
+                        <td>{{ mine.location }}</td>
+                        <td>{{ mine.workers_count }}</td>
+                        <td>
+                            <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ mine.current_status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% for user in mine.users %}
+                                {{ user.username }} ({{ user.role }}){% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_mine', mine_id=mine.id) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Nodes Tab -->
-    <div class="tab-pane fade" id="nodes" role="tabpanel" aria-labelledby="nodes-tab">
-        <div class="d-flex justify-content-between mb-2 mt-3">
-            <h3>Nodes</h3>
-            <a href="{{ url_for('admin.create_node') }}" class="btn btn-primary">Add Node</a>
+    <div class="tab-pane fade" id="nodes" role="tabpanel">
+        <div class="section-header">
+            <h3><i class="fas fa-microchip me-2 text-secondary"></i>Nodes</h3>
+            <a href="{{ url_for('admin.create_node') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Add Node
+            </a>
         </div>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Mines</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for node in nodes %}
-                <tr>
-                    <td>{{ node.id }}</td>
-                    <td>{{ node.name }}</td>
-                    <td>{{ node.description }}</td>
-                    <td>
-                        {% for mine in node.mines %}
-                            {{ mine.name }}{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    </td>
-                    <td>{{ node.current_status }}</td>
-                    <td>
-                        <a href="{{ url_for('admin.edit_node', node_id=node.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Mines</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for node in nodes %}
+                    <tr>
+                        <td>{{ node.id }}</td>
+                        <td>{{ node.name }}</td>
+                        <td>{{ node.description }}</td>
+                        <td>
+                            {% for mine in node.mines %}
+                                {{ mine.name }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ node.current_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_node', node_id=node.id) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Assign Users Tab -->
-    <div class="tab-pane fade" id="assign" role="tabpanel" aria-labelledby="assign-tab">
-        <h3 class="mt-3">Assign Engineer/Supervisor to Mine</h3>
-        <form method="POST" action="{{ url_for('admin.assign_user_to_mine') }}">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="user_id" class="form-label">User</label>
-                    <select class="form-select" id="user_id" name="user_id" required>
-                        <option value="">-- Select Staff --</option>
-                        {% for user in users if user.role != 'admin' %}
+    <div class="tab-pane fade" id="assign" role="tabpanel">
+        <h3 class="mt-3"><i class="fas fa-user-plus me-2 text-secondary"></i>Assign Engineer/Supervisor to Mine</h3>
+        <div class="card p-4 mb-4">
+            <form method="POST" action="{{ url_for('admin.assign_user_to_mine') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="user_id" class="form-label">User</label>
+                        <select class="form-select" id="user_id" name="user_id" required>
+                            <option value="">-- Select Staff --</option>
+                            {% for user in users if user.role != 'admin' %}
                             <option value="{{ user.id }}">{{ user.username }} ({{ user.role }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="mine_id" class="form-label">Mine</label>
-                    <select class="form-select" id="mine_id" name="mine_id" required>
-                        <option value="">-- Select Mine --</option>
-                        {% for mine in mines %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="mine_id" class="form-label">Mine</label>
+                        <select class="form-select" id="mine_id" name="mine_id" required>
+                            <option value="">-- Select Mine --</option>
+                            {% for mine in mines %}
                             <option value="{{ mine.id }}">{{ mine.name }}</option>
-                        {% endfor %}
-                    </select>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" name="action" value="assign" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Assign
+                        </button>
+                        <button type="submit" name="action" value="remove" class="btn btn-outline-danger">
+                            <i class="fas fa-minus"></i> Remove
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label d-block">Action</label>
-                    <button type="submit" name="action" value="assign" class="btn btn-primary">Assign</button>
-                    <button type="submit" name="action" value="remove" class="btn btn-outline-danger">Remove</button>
-                </div>
-            </div>
-        </form>
-
-        <hr>
+            </form>
+        </div>
 
         <h4>Current Assignments</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Mines</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users if user.role != 'admin' %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.role }}</td>
-                    <td>
-                        {% for mine in user.mines %}
-                            {{ mine.name }}{% if not loop.last %}, {% endif %}
-                        {% else %}
-                            No mines
-                        {% endfor %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>User</th><th>Role</th><th>Mines</th></tr>
+                </thead>
+                <tbody>
+                    {% for user in users if user.role != 'admin' %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td><span class="badge bg-secondary">{{ user.role }}</span></td>
+                        <td>
+                            {% for mine in user.mines %}
+                                {{ mine.name }}{% if not loop.last %}, {% endif %}
+                            {% else %}
+                                <span class="text-muted">No mines</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

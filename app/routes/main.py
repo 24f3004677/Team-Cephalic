@@ -15,10 +15,12 @@ def dashboard():
     total_workers = db.session.query(db.func.sum(Mine.workers_count)).scalar() or 0
 
     if current_user.role == 'admin':
-        mines = Mine.query.all()
+        mines = Mine.query.order_by(Mine.id.asc()).all()
     else:
         mines = current_user.mines
+        
 
+        
     return render_template('dashboard.html',
                            total_mines=total_mines,
                            total_nodes=total_nodes,
@@ -88,7 +90,8 @@ def send_alert():
             alert = Alert(triggered_by_user_id=current_user.id,
                           target_type='node', target_id=node.id,
                           message=message, is_automatic=False,
-                          node_id=node.id)
+                          node_id=node.id
+            )
         elif target_type == 'mine':
             mine_id = request.form.get('mine_id')
             if not mine_id:
