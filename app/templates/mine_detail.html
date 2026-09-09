@@ -386,24 +386,6 @@ styleSheet.textContent = `
         margin-top: -8px;
         white-space: nowrap;
     }
-    
-    #alarm-status-indicator {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-weight: bold;
-        z-index: 9999;
-        display: none;
-    }
-    
-    #alarm-status-indicator.active {
-        display: block;
-        background-color: #dc3545;
-        color: white;
-        animation: pulse 1s ease-in-out infinite;
-    }
 `;
 document.head.appendChild(styleSheet);
 
@@ -420,12 +402,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const dangerBanner = document.getElementById("danger-alert-banner");
     const dangerNodesList = document.getElementById("danger-nodes-list");
     const fallbackText = document.getElementById("layout-fallback");
-
-    // Add status indicator
-    const statusIndicator = document.createElement("div");
-    statusIndicator.id = "alarm-status-indicator";
-    statusIndicator.innerHTML = '🚨 ALARM ACTIVE';
-    document.body.appendChild(statusIndicator);
 
     /* =========================================
        SOUND ALARM SYSTEM - SIMPLIFIED
@@ -555,9 +531,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             document.title = `⚠️ DANGER - {{ mine.name }} Details`;
 
-            statusIndicator.style.display = "block";
-            statusIndicator.classList.add("active");
-
             const mineStatus = document.getElementById("mine-status");
             if (mineStatus && !mineStatus.classList.contains("bg-danger")) {
                 mineStatus.className = "badge bg-danger fs-5";
@@ -567,8 +540,6 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             dangerBanner.style.display = "none";
             dangerBanner.classList.remove("visible");
-            statusIndicator.style.display = "none";
-            statusIndicator.classList.remove("active");
             document.title = `{{ mine.name }} Details`;
         }
 
@@ -591,10 +562,6 @@ document.addEventListener("DOMContentLoaded", function () {
             btn.classList.remove('btn-outline-light');
             btn.classList.add('btn-success');
         }
-        
-        statusIndicator.innerHTML = '🔇 ALARM SILENCED';
-        statusIndicator.style.animation = 'none';
-        statusIndicator.style.backgroundColor = '#6c757d';
         
         console.log("Danger acknowledged by user");
     };
@@ -645,11 +612,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         alarmRunning = false;
-        
-        if (currentDangerNodes.length === 0) {
-            statusIndicator.style.display = "none";
-            statusIndicator.classList.remove("active");
-        }
     }
 
     /* =========================================
@@ -883,10 +845,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 btn.classList.remove('btn-success');
                 btn.classList.add('btn-outline-light');
             }
-            
-            statusIndicator.innerHTML = '🚨 ALARM ACTIVE';
-            statusIndicator.style.animation = 'pulse 1s ease-in-out infinite';
-            statusIndicator.style.backgroundColor = '#dc3545';
             
             setTimeout(function() {
                 getDangerFromPage();
