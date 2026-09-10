@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from config import Config
 
 
+
 # Import the shared db instance from models
 from app.models import db
 

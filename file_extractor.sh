@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# Output file
-OUTPUT="code_base.txt"
+# ====== CONFIG ======
+OUTPUT_DIR="/mnt/c/Users/Sohamdip/Desktop/Data/Projects/SIH_26/output"
+TIMESTAMP="$(date +'%Y-%m-%d_%H-%M-%S')"
+OUTPUT_FILE="$OUTPUT_DIR/code_base_${TIMESTAMP}.txt"
 
-# Clear (or create) the output file
-> "$OUTPUT"
+# ====== SETUP ======
+mkdir -p "$OUTPUT_DIR"
 
-# Find all .py and .html files (recursively), process them safely with spaces/newlines
+# ====== EXTRACT ======
 find . -type f \( -name "*.py" -o -name "*.html" \) -print0 | while IFS= read -r -d '' file; do
-    # Write a separator with the file name
-    echo "=== $file ===" >> "$OUTPUT"
-    # Append the file content
-    cat "$file" >> "$OUTPUT"
-    # Add a trailing newline for readability
-    echo >> "$OUTPUT"
-    echo >> "$OUTPUT"
-    echo >> "$OUTPUT"
+    echo "=== $file ===" >> "$OUTPUT_FILE"
+    cat "$file" >> "$OUTPUT_FILE"
+    echo >> "$OUTPUT_FILE"
 done
 
-echo "Done. All contents written to $OUTPUT"
+echo "Snapshot written to $OUTPUT_FILE"
