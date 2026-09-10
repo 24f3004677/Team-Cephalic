@@ -12,8 +12,6 @@ node_links = db.Table(
     db.Column('to_node_id', db.Integer, db.ForeignKey('node.id'), primary_key=True)
 )
 
-
-
 # Association Tables
 mine_nodes = db.Table(
     'mine_nodes',
@@ -38,6 +36,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False)  # 'admin', 'engineer', 'supervisor'
     is_blacklisted = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    phone = db.Column(db.String(20), nullable=True)   # NEW: phone in E.164 format
 
     # Relationships
     mines = db.relationship('Mine', secondary=user_mines, backref=db.backref('users', lazy='dynamic'))
@@ -64,6 +63,7 @@ class Mine(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
     y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
+
     def update_status_from_nodes(self):
         """Recalculate mine status based on the statuses of its nodes."""
         statuses = [node.current_status for node in self.nodes]
@@ -72,7 +72,8 @@ class Mine(db.Model):
         elif 'attention' in statuses:
             self.current_status = 'attention'
         else:
-           	self.current_status = 'normal'
+            self.current_status = 'normal'
+
     # Relationships
     nodes = db.relationship('Node', secondary=mine_nodes, backref=db.backref('mines', lazy='dynamic'))
     analysis_logs = db.relationship('AnalysisLog', backref='mine', lazy='dynamic')
@@ -92,6 +93,7 @@ class Node(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
     y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
+
     # Relationships
     sensor_data = db.relationship('SensorData', backref='node', lazy='dynamic')
     analysis_logs = db.relationship('AnalysisLog', backref='node', lazy='dynamic')
