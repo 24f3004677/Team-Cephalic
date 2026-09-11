@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ====== CONFIG ======
-OUTPUT_DIR="/mnt/c/Users/Sohamdip/Desktop/Data/Projects/SIH_26/output"
+OUTPUT_DIR="/mnt/c/Users/Prem Karmakar/Desktop/DL_backend/output"
 TIMESTAMP="$(date +'%Y-%m-%d_%H-%M-%S')"
 OUTPUT_FILE="$OUTPUT_DIR/code_base_${TIMESTAMP}.txt"
 
