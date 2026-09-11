@@ -145,7 +145,20 @@ def mark_node_fixed(node_id):
         db.session.add(mine)
     db.session.commit()
     flash(f'Node {node.name} marked as fixed', 'success')
-    return redirect(url_for('main.mine_detail', mine_id=request.form.get('mine_id', type=int) or node.mines[0].id if node.mines else 'dashboard'))
+    next_mine_id = request.form.get('mine_id', type=int)
+
+    if not next_mine_id:
+        first_mine = (
+            node.mines.first()
+            if hasattr(node.mines, "first")
+            else (node.mines[0] if node.mines else None)
+        )
+        next_mine_id = first_mine.id if first_mine else None
+
+    if next_mine_id:
+        return redirect(url_for('main.mine_detail', mine_id=next_mine_id))
+
+    return redirect(url_for('main.dashboard'))
 
 @main_bp.route('/mines/map')
 @login_required

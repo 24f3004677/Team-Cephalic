@@ -176,6 +176,10 @@ def list_links():
 @admin_bp.route('/mines/map')
 @role_required('admin')
 def mines_map():
+    def get_accessible_mines(user):
+        if user.role == 'admin':
+            return Mine.query.all()
+        return user.mines
     mines = get_accessible_mines(current_user)
     data = []
     for mine in mines:
@@ -219,11 +223,13 @@ def edit_node(node_id):
         # Update mine associations
         selected_mine_ids = request.form.getlist('mines')
         # Clear existing associations
-        node.mines = []
+        for m in list(node.mines):
+            node.mines.remove(m)
+
         for mid in selected_mine_ids:
             mine = Mine.query.get(int(mid))
-            if mine:
-                node.mines.append(mine)
+        if mine:
+            node.mines.append(mine)
 
         db.session.commit()
         flash(f'Node "{node.name}" updated.', 'success')

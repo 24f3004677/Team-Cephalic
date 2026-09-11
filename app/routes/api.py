@@ -63,7 +63,7 @@ def receive_analysis():
         # Update mine status based on all its nodes
         # (if any node is danger, mine is danger; else if any attention, attention; else normal)
         mine_nodes = mine.nodes.all()
-        statuses = [n.current_status for n in mine_nodes]
+        statuses = [n.current_status for n in mine.nodes]
         if 'danger' in statuses:
             mine.current_status = 'danger'
         elif 'attention' in statuses:

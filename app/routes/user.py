@@ -15,7 +15,7 @@ def has_mine_access(user, mine_id):
 def get_accessible_mines(user):
     if user.role == 'admin':
         return Mine.query.all()
-    return user.mines.all()
+    return user.mines
     
 user_bp = Blueprint('user', __name__)
 
@@ -43,7 +43,7 @@ def create_node():
         flash('Node created', 'success')
         return redirect(url_for('main.dashboard'))
     # Only show mines assigned to current user
-    mines = current_user.mines.all()
+    mines = current_user.mines
     return render_template('create_node.html', mines=mines)
 
 @user_bp.route('/mine/<int:mine_id>/graph')
