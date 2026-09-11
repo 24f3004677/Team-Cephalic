@@ -13,39 +13,40 @@ DASHBOARD_PATH = str(_STATIC / 'scientific_dashboard.png')
 LOG_CSV_PATH   = str(_STATIC / 'telemetry_log.csv')
 
 
-@api_ml_bp.route('/live-status')
+@api_ml_bp.route("/live-status")
 @login_required
 def live_status():
     """Returns the engine's full internal state as JSON."""
     engine = get_engine()
     hist = engine.history
 
-    latest = {}
-    if hist['step']:
+    if hist.get("step"):
         latest = {
-            'step': hist['step'][-1],
-            'tilt_x': round(hist['tilt_x'][-1], 3),
-            'roof_convergence': round(hist['roof_dist'][-1], 2),
-            'lstm_mse': round(hist['lstm_mse'][-1], 5),
-            'gru_error': round(hist['gru_error'][-1], 4),
-            'risk_score': hist['risk_score'][-1],
+            "step": hist["step"][-1],
+            "tilt_x": round(hist["tilt_x"][-1], 3),
+            "roof_convergence": round(hist["roof_dist"][-1], 2),
+            "lstm_mse": round(hist["lstm_mse"][-1], 5),
+            "gru_error": round(hist["gru_error"][-1], 4),
+            "risk_score": hist["risk_score"][-1],
         }
-
-    status_text = {0: 'SAFE', 1: 'WARNING', 2: 'CRITICAL'}.get(
-        latest.get('risk_score', 0), 'BUFFERING'
-    )
+        status_text = {0: "SAFE", 1: "WARNING", 2: "CRITICAL"}.get(
+            latest["risk_score"], "UNKNOWN"
+        )
+    else:
+        latest = {}
+        status_text = "BUFFERING"
 
     return jsonify({
-        'status': status_text,
-        'latest': latest,
-        'history': {
-            'step': hist['step'][-60:],
-            'tilt_x': hist['tilt_x'][-60:],
-            'roof_dist': hist['roof_dist'][-60:],
-            'lstm_mse': hist['lstm_mse'][-60:],
-            'gru_error': hist['gru_error'][-60:],
-            'risk_score': hist['risk_score'][-60:],
-        }
+        "status": status_text,
+        "latest": latest,
+        "history": {
+            "step": hist["step"][-60:],
+            "tilt_x": hist["tilt_x"][-60:],
+            "roof_dist": hist["roof_dist"][-60:],
+            "lstm_mse": hist["lstm_mse"][-60:],
+            "gru_error": hist["gru_error"][-60:],
+            "risk_score": hist["risk_score"][-60:],
+        },
     })
 
 
