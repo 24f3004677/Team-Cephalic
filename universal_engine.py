@@ -74,7 +74,7 @@ class StructuralAnomalyEngine:
             
             # 2. Statistical Machine Learning Architecture
             self.ml_detector_xgb = xgb.XGBClassifier()
-            self.ml_detector_xgb.load_model(f'{self.model_dir}/xgboost_statistical_detector.json')
+            self.ml_detector_xgb.load_model(f'{self.model_dir}/xgboost_statistical_detector_2.0.json')
             
         except Exception as e:
             print(f"[CRITICAL ERROR] Failed to load models from '{self.model_dir}/'.")
@@ -242,10 +242,13 @@ class StructuralAnomalyEngine:
             print(f"[PIPELINE ERROR] {str(e)}")
             return {"status": "ERROR", "message": str(e)}
 
-    def generate_dashboard(self, save_path='public/scientific_dashboard.png'):
+    def generate_dashboard(self, save_path=None):
         """
         Renders a high-resolution, analytical Matplotlib grid for scientific review.
         """
+        if save_path is None:
+            save_path = os.path.join(os.path.dirname(self.log_file), 'scientific_dashboard.png')
+
         if len(self.history['step']) < 2: 
             return False
             
