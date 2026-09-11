@@ -57,16 +57,14 @@ def mine_graph(mine_id):
     nodes = mine.nodes  # directly iterate, no .all()
     node_data = []
     for node in nodes:
-        latest_analysis = AnalysisLog.query.filter_by(node_id=node.id).order_by(AnalysisLog.timestamp.desc()).first()
-        status = latest_analysis.status if latest_analysis else None
-        status_str = 'normal' if status == 0 else 'attention' if status == 1 else 'danger' if status == 2 else 'unknown'
+        status_str = node.current_status if node.current_status else 'unknown'
         node_data.append({
             'id': node.id,
             'name': node.name,
             'x': node.x,
             'y': node.y,
             'status': status_str
-        })
+    })
 
     node_ids = [n['id'] for n in node_data]
     links = []
