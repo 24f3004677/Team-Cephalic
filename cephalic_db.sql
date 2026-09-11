@@ -12,6 +12,7 @@ select distinct mine_id,from_node_id,to_node_id from mine_nodes as m_n join node
 
 select * from alert
 
+select * from user_mines
 select * from node_links
 select * from user_mines
 
