@@ -16,7 +16,7 @@
 <ul class="nav nav-tabs" id="officeTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
-            <i class="fas fa-users me-1"></i>Users
+            <i class="fas fa-users me-1"></i>Staffs
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -31,7 +31,7 @@
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab">
-            <i class="fas fa-user-plus me-1"></i>Assign Users
+            <i class="fas fa-user-plus me-1"></i>Assign Staff
         </button>
     </li>
 </ul>
@@ -51,7 +51,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Username</th>
+                        <th>Staffname</th>
                         <th>Email</th>
                         <th>Role</th>
                         <th>Blacklisted</th>
@@ -118,7 +118,7 @@
                         <th>Location</th>
                         <th>Workers</th>
                         <th>Status</th>
-                        <th>Assigned Users</th>
+                        <th>Assigned Staff</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -206,7 +206,7 @@
             <form method="POST" action="{{ url_for('admin.assign_user_to_mine') }}">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
-                        <label for="user_id" class="form-label">User</label>
+                        <label for="user_id" class="form-label">Staff</label>
                         <select class="form-select" id="user_id" name="user_id" required>
                             <option value="">-- Select Staff --</option>
                             {% for user in users if user.role != 'admin' %}
@@ -239,7 +239,7 @@
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
-                    <tr><th>User</th><th>Role</th><th>Mines</th></tr>
+                    <tr><th>Staff</th><th>Role</th><th>Mines</th></tr>
                 </thead>
                 <tbody>
                     {% for user in users if user.role != 'admin' %}
