@@ -1061,7 +1061,7 @@ async function aiPoll() {
 
 
     try {
-
+        const nodeId = {{ node.id }};
         const response =
             await fetch(
                 '/api/ml/live-status',

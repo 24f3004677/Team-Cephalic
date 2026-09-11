@@ -22,24 +22,14 @@ warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-# ---------------------------------------------------------------------
-# Custom Keras layer: VAE reparameterization trick.
-# Must be importable by name for Keras 3 model loading.
-# Dtype-agnostic so it works whether the saved model used fp32 or
-# mixed_float16 precision.
-# ---------------------------------------------------------------------
 class Sampling(keras.layers.Layer):
     def call(self, inputs):
         z_mean, z_log_var = inputs
         batch = tf.shape(z_mean)[0]
         dim   = tf.shape(z_mean)[1]
         dtype = z_mean.dtype
-
         epsilon = tf.random.normal(
-            shape=(batch, dim),
-            mean=0.0,
-            stddev=1.0,
-            dtype=dtype,
+            shape=(batch, dim), mean=0.0, stddev=1.0, dtype=dtype,
         )
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
@@ -55,11 +45,8 @@ class Sampling(keras.layers.Layer):
 
 
 class StructuralAnomalyEngine:
-    """
-    Universal Master Pipeline for Structural Anomaly Detection.
-    Handles I/O validation, buffering, deep learning/machine learning fusion,
-    scientific visualization, and continuous CSV logging.
-    """
+    """Universal Master Pipeline for Structural Anomaly Detection.
+       Now keeps one rolling buffer per node id."""
 
     MAX_HISTORY = 1000
 
@@ -74,18 +61,13 @@ class StructuralAnomalyEngine:
         self.log_file = log_file
         self.dashboard_file = dashboard_file
 
-        # Flags for optionally-missing models
         self.has_vae = True
-
         self.dl_window = 24
         self.ml_window = 10
-        self.master_buffer = pd.DataFrame()
 
-        self.history = {
-            'step': [], 'tilt_x': [], 'roof_dist': [],
-            'lstm_mse': [], 'gru_error': [], 'risk_score': [],
-        }
-        self.step_counter = 0
+        # ---- per-node state ----
+        # node_id -> {'buffer': DataFrame, 'history': {...}, 'step_counter': int}
+        self.node_state = {}
 
         self._ensure_parent(self.log_file)
         self._ensure_parent(self.dashboard_file)
@@ -94,8 +76,26 @@ class StructuralAnomalyEngine:
         print("[INIT] Engine Ready. Awaiting telemetry stream.")
 
     # -------------------------------------------------------------
-    # Helpers
+    # Per-node state helpers
     # -------------------------------------------------------------
+    def _new_node_state(self):
+        return {
+            'buffer': pd.DataFrame(),
+            'step_counter': 0,
+            'history': {
+                'step': [], 'tilt_x': [], 'roof_dist': [],
+                'lstm_mse': [], 'gru_error': [], 'risk_score': [],
+            },
+        }
+
+    def get_node_state(self, node_id):
+        if node_id not in self.node_state:
+            self.node_state[node_id] = self._new_node_state()
+        return self.node_state[node_id]
+
+    def get_node_history(self, node_id):
+        return self.get_node_state(node_id)['history']
+
     @staticmethod
     def _ensure_parent(path):
         if not path:
@@ -104,20 +104,17 @@ class StructuralAnomalyEngine:
         if parent:
             os.makedirs(parent, exist_ok=True)
 
-    def _trim_history(self):
-        if len(self.history['step']) <= self.MAX_HISTORY:
+    def _trim_history(self, history):
+        if len(history['step']) <= self.MAX_HISTORY:
             return
-        excess = len(self.history['step']) - self.MAX_HISTORY
-        for key in self.history:
-            del self.history[key][:excess]
+        excess = len(history['step']) - self.MAX_HISTORY
+        for key in history:
+            del history[key][:excess]
 
     # -------------------------------------------------------------
     # Model loading
     # -------------------------------------------------------------
     def _load_models(self):
-        """Loads all Keras and XGBoost artifacts. VAE failure is non-fatal."""
-
-        # --- LSTM (required) ---
         try:
             self.lstm = keras.models.load_model(
                 f'{self.model_dir}/lstm_autoencoder_final.keras'
@@ -128,7 +125,6 @@ class StructuralAnomalyEngine:
             print(traceback.format_exc())
             raise
 
-        # --- VAE (optional: works around Keras 3 mixed-precision load issues) ---
         try:
             self.vae = keras.models.load_model(
                 f'{self.model_dir}/vae_final.keras',
@@ -144,7 +140,6 @@ class StructuralAnomalyEngine:
             self.vae_meta = {'selected_threshold': float('inf')}
             self.has_vae = False
 
-        # --- GRU (required) ---
         try:
             self.gru = keras.models.load_model(
                 f'{self.model_dir}/gru_forecaster.keras',
@@ -156,7 +151,6 @@ class StructuralAnomalyEngine:
             print(traceback.format_exc())
             raise
 
-        # --- XGBoost fusion + statistical detector ---
         try:
             self.dl_fusion_xgb = xgb.XGBClassifier()
             self.dl_fusion_xgb.load_model(
@@ -172,7 +166,7 @@ class StructuralAnomalyEngine:
             raise
 
     # -------------------------------------------------------------
-    # Input validation / feature engineering
+    # Feature engineering
     # -------------------------------------------------------------
     def _validate_and_fill_inputs(self, raw_data):
         required_keys = {
@@ -228,7 +222,6 @@ class StructuralAnomalyEngine:
                 + previous_tick['acceleration_z'] ** 2
             ))
             tick['acceleration_magnitude_change'] = tick['acceleration_magnitude'] - prev_mag
-
             tick['soil_change'] = tick['soil20cm'] - previous_tick['soil20cm']
 
             prev_soil_mean = (
@@ -237,40 +230,42 @@ class StructuralAnomalyEngine:
                 + previous_tick['soil60cm']
             ) / 3.0
             tick['soil_mean_change'] = tick['soil_mean'] - prev_soil_mean
-
             tick['temperature_change'] = tick['temperature'] - previous_tick['temperature']
             tick['humidity_change'] = tick['humidity'] - previous_tick['humidity']
 
         return tick
 
     # -------------------------------------------------------------
-    # Main loop
+    # Main loop (per node)
     # -------------------------------------------------------------
-    def process_tick(self, raw_sensor_data, auto_render_graph=False):
+    def process_tick(self, raw_sensor_data, node_id='default', auto_render_graph=False):
         try:
-            self.step_counter += 1
+            state = self.get_node_state(node_id)
+            state['step_counter'] += 1
+            step = state['step_counter']
+
             validated_data = self._validate_and_fill_inputs(raw_sensor_data)
 
             previous_tick = (
-                self.master_buffer.iloc[-1].to_dict()
-                if not self.master_buffer.empty
+                state['buffer'].iloc[-1].to_dict()
+                if not state['buffer'].empty
                 else None
             )
             processed_tick = self._calculate_dl_features(validated_data, previous_tick)
 
-            self.master_buffer = pd.concat(
-                [self.master_buffer, pd.DataFrame([processed_tick])],
+            state['buffer'] = pd.concat(
+                [state['buffer'], pd.DataFrame([processed_tick])],
                 ignore_index=True,
             )
-            if len(self.master_buffer) > self.dl_window:
-                self.master_buffer = (
-                    self.master_buffer.iloc[-self.dl_window:].reset_index(drop=True)
+            if len(state['buffer']) > self.dl_window:
+                state['buffer'] = (
+                    state['buffer'].iloc[-self.dl_window:].reset_index(drop=True)
                 )
 
-            if len(self.master_buffer) < self.dl_window:
+            if len(state['buffer']) < self.dl_window:
                 return {
                     "status": "BUFFERING",
-                    "ready_pct": round((len(self.master_buffer) / self.dl_window) * 100),
+                    "ready_pct": round((len(state['buffer']) / self.dl_window) * 100),
                 }
 
             # ==========================================
@@ -292,7 +287,7 @@ class StructuralAnomalyEngine:
 
             X_ae_seq = np.expand_dims(
                 self.lstm_meta['scaler'].transform(
-                    self.master_buffer[ae_cols].values
+                    state['buffer'][ae_cols].values
                 ),
                 axis=0,
             ).astype(np.float32)
@@ -310,7 +305,7 @@ class StructuralAnomalyEngine:
                 'rotation_x', 'rotation_y', 'rotation_z',
                 'acceleration_x', 'acceleration_y', 'acceleration_z',
             ]
-            X_gru_raw = self.master_buffer[gru_cols].values
+            X_gru_raw = state['buffer'][gru_cols].values
             X_gru_seq = np.expand_dims(
                 self.gru_meta['scaler_X'].transform(X_gru_raw), axis=0
             ).astype(np.float32)
@@ -318,7 +313,6 @@ class StructuralAnomalyEngine:
             y_true = self.gru_meta['scaler_y'].transform([X_gru_raw[-1, :3]])
             gru_error = float(np.mean(np.abs(y_true - gru_pred)))
 
-            # DL Fusion Meta-Learner
             ctx = X_ae_seq[:, -1, :9][0]
             fusion_df = pd.DataFrame(
                 [ctx],
@@ -342,7 +336,7 @@ class StructuralAnomalyEngine:
             # ==========================================
             # 2. MACHINE LEARNING TRACK
             # ==========================================
-            ml_buffer = self.master_buffer.iloc[-self.ml_window:]
+            ml_buffer = state['buffer'].iloc[-self.ml_window:]
             ml_cols = [
                 'Accel_X (m/s^2)', 'Accel_Y (m/s^2)', 'Accel_Z (m/s^2)',
                 'Strain (με)', 'Temp (°C)', 'roof_convergence_cm',
@@ -377,17 +371,17 @@ class StructuralAnomalyEngine:
             tilt_val = float(processed_tick['rotation_x'])
             roof_val = ml_features['roof_convergence_cm_live']
 
-            self.history['step'].append(self.step_counter)
-            self.history['tilt_x'].append(tilt_val)
-            self.history['roof_dist'].append(roof_val)
-            self.history['lstm_mse'].append(lstm_mse)
-            self.history['gru_error'].append(gru_error)
-            self.history['risk_score'].append(ultimate_score)
-            self._trim_history()
+            state['history']['step'].append(step)
+            state['history']['tilt_x'].append(tilt_val)
+            state['history']['roof_dist'].append(roof_val)
+            state['history']['lstm_mse'].append(lstm_mse)
+            state['history']['gru_error'].append(gru_error)
+            state['history']['risk_score'].append(ultimate_score)
+            self._trim_history(state['history'])
 
             try:
                 log_data = pd.DataFrame([{
-                    'step': self.step_counter,
+                    'step': step,
                     'status': status_text,
                     'tilt_x': tilt_val,
                     'roof_convergence': roof_val,
@@ -403,8 +397,11 @@ class StructuralAnomalyEngine:
             except Exception as log_exc:
                 print(f"[CSV WARN] {log_exc}")
 
-            if auto_render_graph and len(self.history['step']) > 1:
-                self.generate_dashboard(save_path=self.dashboard_file)
+            if auto_render_graph and len(state['history']['step']) > 1:
+                self.generate_dashboard(
+                    save_path=self.dashboard_file,
+                    node_id=node_id,
+                )
 
             return {
                 "status": "ACTIVE",
@@ -427,15 +424,25 @@ class StructuralAnomalyEngine:
             return {"status": "ERROR", "message": str(e)}
 
     # -------------------------------------------------------------
-    # Dashboard rendering
+    # Dashboard rendering (per node)
     # -------------------------------------------------------------
-    def generate_dashboard(self, save_path=None):
+    def generate_dashboard(self, save_path=None, node_id=None):
         save_path = save_path or self.dashboard_file
-        if len(self.history['step']) < 2:
+
+        if node_id is None:
+            for nid, st in self.node_state.items():
+                if len(st['history']['step']) >= 2:
+                    node_id = nid
+                    break
+        if node_id is None:
+            return False
+
+        hist = self.get_node_history(node_id)
+        if len(hist['step']) < 2:
             return False
 
         try:
-            df_hist = pd.DataFrame(self.history)
+            df_hist = pd.DataFrame(hist)
 
             try:
                 plt.style.use('seaborn-v0_8-whitegrid')
