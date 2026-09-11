@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from config import Config
 
 
+
 # Import the shared db instance from models
 from app.models import db
 
@@ -39,7 +40,13 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(api_bp, url_prefix='/api')
+    from app.routes.api_ml import api_ml_bp
+    app.register_blueprint(api_ml_bp, url_prefix='/api/ml')
 
+    import os
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+        from app.ml_engine import start_background_engine
+        start_background_engine(app)
     # Optional: create tables and default admin
     with app.app_context():
         if app.config.get('AUTO_CREATE_DB'):

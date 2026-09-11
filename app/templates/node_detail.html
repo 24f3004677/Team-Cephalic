@@ -1,85 +1,1712 @@
 {% extends "base.html" %}
+
 {% block title %}{{ node.name }}{% endblock %}
+
 {% block content %}
-<h1>{{ node.name }}</h1>
-<p>Description: {{ node.description or 'N/A' }}</p>
-<p>Current Status: 
-    <span class="badge {% if node.current_status == 'danger' %}bg-danger{% elif node.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+
+<!-- ============================================================
+     NODE HEADER
+============================================================ -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-microchip me-2 text-primary"></i>
+        {{ node.name }}
+    </h1>
+
+    <span
+        class="badge
+        {% if node.current_status == 'danger' %}
+            bg-danger
+        {% elif node.current_status == 'attention' %}
+            bg-warning text-dark
+        {% else %}
+            bg-success
+        {% endif %}
+        fs-5"
+    >
         {{ node.current_status }}
     </span>
-</p>
-<p>Mines: 
-    {% for mine in node.mines %}
-        {{ mine.name }}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-</p>
+</div>
 
-<h3>Sensor Data (last readings)</h3>
-{% for sensor_type, data_list in sensor_data.items() %}
-    <h5>{{ sensor_type }}</h5>
-    <canvas id="chart-{{ sensor_type }}" width="400" height="200"></canvas>
-{% else %}
-    <p>No sensor data available.</p>
-{% endfor %}
 
-<h3>Analysis History</h3>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Timestamp</th>
-            <th>Status</th>
-            <th>Mine</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for log in analysis_history %}
-        <tr>
-            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-            <td>
-                {% if log.status == 0 %}<span class="badge bg-success">Under Control</span>
-                {% elif log.status == 1 %}<span class="badge bg-warning text-dark">Need Attention</span>
-                {% else %}<span class="badge bg-danger">Danger</span>{% endif %}
-            </td>
-            <td>{{ log.mine.name }}</td>
-        </tr>
+<!-- ============================================================
+     NODE INFORMATION
+============================================================ -->
+<div class="row g-4 mb-4">
+
+    <!-- Node information -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Node Information
+                </h5>
+
+                <ul class="list-group list-group-flush">
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Description</span>
+                        <span>{{ node.description or 'N/A' }}</span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Position</span>
+                        <span>
+                            X: {{ node.x if node.x is not none else 'N/A' }},
+                            Y: {{ node.y if node.y is not none else 'N/A' }}
+                        </span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Mines</span>
+
+                        <span>
+                            {% if node.mines %}
+                                {% for mine in node.mines %}
+                                    {{ mine.name }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </li>
+
+                </ul>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Created information -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    <i class="fas fa-clock me-2"></i>
+                    Created
+                </h5>
+
+                <p class="display-6">
+                    {% if node.created_at %}
+                        {{ node.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     HISTORICAL SENSOR DATA
+============================================================ -->
+<h3 class="mb-3">
+    <i class="fas fa-chart-line me-2 text-primary"></i>
+    Sensor Data (last readings)
+</h3>
+
+<div class="row g-4">
+
+    {% if sensor_data %}
+
+        {% for sensor_type, data_list in sensor_data.items() %}
+
+            <div class="col-md-6">
+
+                <div class="card h-100">
+
+                    <div class="card-header bg-white fw-bold">
+                        {{ sensor_type }}
+                    </div>
+
+                    <div class="card-body">
+
+                        {% if data_list %}
+
+                            <div style="position: relative; height: 250px;">
+                                <canvas
+                                    id="chart-{{ sensor_type|replace(' ', '-')|replace('/', '-') }}"
+                                ></canvas>
+                            </div>
+
+                        {% else %}
+
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No data available for {{ sensor_type }}.
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
         {% endfor %}
-    </tbody>
-</table>
+
+    {% else %}
+
+        <div class="col-12">
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No sensor data available.
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- ============================================================
+     ANALYSIS HISTORY
+============================================================ -->
+<h3 class="mt-5 mb-3">
+    <i class="fas fa-history me-2 text-primary"></i>
+    Analysis History
+</h3>
+
+<div class="table-responsive">
+
+    <table class="table table-hover align-middle">
+
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Mine</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% if analysis_history %}
+
+                {% for log in analysis_history %}
+
+                    <tr>
+
+                        <td>
+                            {% if log.timestamp %}
+                                {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+
+                        <td>
+
+                            {% if log.status == 0 %}
+
+                                <span class="badge bg-success">
+                                    Under Control
+                                </span>
+
+                            {% elif log.status == 1 %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Need Attention
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-danger">
+                                    Danger
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {% if log.mine %}
+                                {{ log.mine.name }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            {% else %}
+
+                <tr>
+                    <td colspan="3" class="text-center text-muted py-4">
+                        No analysis history available.
+                    </td>
+                </tr>
+
+            {% endif %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<!-- ============================================================
+     AI LIVE MONITOR PANEL
+============================================================ -->
+
+<style>
+
+    .ai-panel {
+        background: linear-gradient(
+            135deg,
+            #0f1720 0%,
+            #1a2530 100%
+        );
+
+        color: #e6f1ff;
+
+        border-radius: 14px;
+
+        padding: 20px;
+
+        font-family:
+            'JetBrains Mono',
+            'Courier New',
+            monospace;
+
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.35);
+
+        margin-top: 24px;
+    }
+
+
+    .ai-panel h3 {
+        margin: 0 0 12px;
+
+        letter-spacing: 1px;
+
+        font-weight: 600;
+
+        color: #7dd3fc;
+    }
+
+
+    .ai-status {
+        display: inline-block;
+
+        padding: 6px 18px;
+
+        border-radius: 999px;
+
+        font-weight: 700;
+
+        letter-spacing: 2px;
+
+        text-transform: uppercase;
+
+        transition:
+            all 0.3s ease;
+    }
+
+
+    .ai-status.SAFE {
+        background: #064e3b;
+
+        color: #6ee7b7;
+
+        box-shadow:
+            0 0 12px #10b98155;
+    }
+
+
+    .ai-status.WARNING {
+        background: #78350f;
+
+        color: #fcd34d;
+
+        box-shadow:
+            0 0 12px #f59e0b55;
+    }
+
+
+    .ai-status.CRITICAL {
+        background: #7f1d1d;
+
+        color: #fca5a5;
+
+        box-shadow:
+            0 0 20px #ef444488;
+
+        animation:
+            pulseRed 1s infinite alternate;
+    }
+
+
+    .ai-status.BOOTING {
+        background: #1e293b;
+
+        color: #94a3b8;
+
+        box-shadow:
+            0 0 10px #64748b55;
+    }
+
+
+    .ai-status.UNKNOWN {
+        background: #334155;
+
+        color: #cbd5e1;
+    }
+
+
+    @keyframes pulseRed {
+
+        from {
+            box-shadow:
+                0 0 8px #ef4444;
+        }
+
+        to {
+            box-shadow:
+                0 0 28px #ef4444,
+                0 0 40px #ef444488;
+        }
+
+    }
+
+
+    .ai-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(140px, 1fr)
+            );
+
+        gap: 12px;
+
+        margin-top: 16px;
+    }
+
+
+    .ai-card {
+        background: #0b1218;
+
+        border:
+            1px solid #1f2d3a;
+
+        border-radius: 10px;
+
+        padding: 12px;
+
+        min-height: 75px;
+    }
+
+
+    .ai-card .label {
+        font-size: 11px;
+
+        color: #64748b;
+
+        letter-spacing: 1px;
+
+        text-transform: uppercase;
+    }
+
+
+    .ai-card .value {
+        font-size: 22px;
+
+        font-weight: 700;
+
+        color: #38bdf8;
+
+        margin-top: 4px;
+
+        word-break: break-word;
+    }
+
+
+    .ai-plot {
+        width: 100%;
+
+        border-radius: 10px;
+
+        margin-top: 16px;
+
+        border:
+            1px solid #1f2d3a;
+
+        background: #0b1218;
+    }
+
+
+    .ai-toolbar {
+        display: flex;
+
+        gap: 10px;
+
+        margin-top: 14px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .ai-btn {
+        background: #1e3a5f;
+
+        color: #e6f1ff;
+
+        padding: 8px 16px;
+
+        border: none;
+
+        border-radius: 8px;
+
+        cursor: pointer;
+
+        font-family: inherit;
+
+        font-size: 13px;
+
+        transition:
+            background 0.2s ease,
+            transform 0.1s ease;
+
+        text-decoration: none;
+
+        display: inline-block;
+    }
+
+
+    .ai-btn:hover {
+        background: #2b5078;
+
+        color: #ffffff;
+
+        text-decoration: none;
+    }
+
+
+    .ai-btn:active {
+        transform: scale(0.98);
+    }
+
+
+    .ai-btn:disabled {
+        opacity: 0.6;
+
+        cursor: not-allowed;
+    }
+
+
+    .ai-error {
+        color: #fca5a5;
+
+        font-size: 12px;
+
+        margin-top: 10px;
+
+        display: none;
+    }
+
+</style>
+
+
+<div class="ai-panel">
+
+    <!-- Header -->
+    <h3>
+        ⚡ AI SUBSIDENCE MONITOR
+    </h3>
+
+
+    <!-- Status -->
+    <span
+        id="ai-status"
+        class="ai-status BOOTING"
+    >
+        BOOTING
+    </span>
+
+
+    <span
+        style="
+            color:#64748b;
+            font-size:12px;
+            margin-left:10px;
+        "
+    >
+        tick #
+        <span id="ai-step">0</span>
+
+        · updated
+
+        <span id="ai-updated">
+            --:--:--
+        </span>
+    </span>
+
+
+    <!-- Metrics -->
+    <div class="ai-grid">
+
+        <div class="ai-card">
+
+            <div class="label">
+                LSTM MSE
+            </div>
+
+            <div
+                class="value"
+                id="ai-lstm"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="ai-card">
+
+            <div class="label">
+                GRU ERROR
+            </div>
+
+            <div
+                class="value"
+                id="ai-gru"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="ai-card">
+
+            <div class="label">
+                TILT X (°)
+            </div>
+
+            <div
+                class="value"
+                id="ai-tilt"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="ai-card">
+
+            <div class="label">
+                ROOF (cm)
+            </div>
+
+            <div
+                class="value"
+                id="ai-roof"
+            >
+                —
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Sparkline -->
+    <canvas
+        id="ai-spark"
+        class="ai-plot"
+        height="120"
+    ></canvas>
+
+
+    <!-- Scientific dashboard image -->
+    <img
+        id="ai-plot"
+        class="ai-plot"
+        src=""
+        alt="AI scientific dashboard"
+        style="display:none;"
+        onerror="this.style.display='none';"
+        onload="this.style.display='block';"
+    />
+
+
+    <!-- Error -->
+    <div
+        id="ai-error"
+        class="ai-error"
+    >
+        Unable to connect to the AI monitoring service.
+    </div>
+
+
+    <!-- Toolbar -->
+    <div class="ai-toolbar">
+
+        <button
+            type="button"
+            id="ai-test-btn"
+            class="ai-btn"
+            onclick="aiManualTick()"
+        >
+            🧪 Inject Test Tick
+        </button>
+
+
+        <a
+            class="ai-btn"
+            href="/api/ml/telemetry.csv"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            ⬇ Download CSV
+        </a>
+
+    </div>
+
+</div>
+
+
 {% endblock %}
 
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+
 {% block extra_js %}
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    {% for sensor_type, data_list in sensor_data.items() %}
-        var ctx{{ loop.index }} = document.getElementById('chart-{{ sensor_type }}').getContext('2d');
-        new Chart(ctx{{ loop.index }}, {
-            type: 'line',
-            data: {
-                labels: [
-                    {% for d in data_list|reverse %}
-                        '{{ d.timestamp }}',
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: '{{ sensor_type }}',
-                    data: [
-                        {% for d in data_list|reverse %}
-                            {{ d.value }},
-                        {% endfor %}
-                    ],
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { display: true, title: { display: true, text: 'Time' } },
-                    y: { display: true, title: { display: true, text: 'Value' } }
-                }
-            }
-        });
-    {% endfor %}
-});
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        /*
+         * ========================================================
+         * HISTORICAL SENSOR CHARTS
+         * ========================================================
+         */
+
+        {% if sensor_data %}
+
+            {% for sensor_type, data_list in sensor_data.items() %}
+
+                {% if data_list %}
+
+                    (function () {
+
+                        const canvasId =
+                            {{ ('chart-' ~ sensor_type|replace(' ', '-')|replace('/', '-'))|tojson }};
+
+                        const canvas =
+                            document.getElementById(canvasId);
+
+                        if (!canvas) {
+                            return;
+                        }
+
+
+                        const context =
+                            canvas.getContext('2d');
+
+                        if (!context) {
+                            return;
+                        }
+
+
+                        /*
+                         * Reverse a copy so the original
+                         * Python/Jinja data is not modified.
+                         */
+                        const sensorData = [
+                            {% for d in data_list|reverse %}
+
+                                {
+                                    timestamp:
+                                        {{ d.timestamp|tojson }},
+
+                                    value:
+                                        {{ d.value|tojson }}
+                                }
+
+                                {% if not loop.last %},{% endif %}
+
+                            {% endfor %}
+                        ];
+
+
+                        const labels =
+                            sensorData.map(
+                                item => item.timestamp
+                            );
+
+
+                        const values =
+                            sensorData.map(
+                                item => item.value
+                            );
+
+
+                        new Chart(
+                            context,
+                            {
+                                type: 'line',
+
+                                data: {
+
+                                    labels: labels,
+
+                                    datasets: [
+                                        {
+                                            label:
+                                                {{ sensor_type|tojson }},
+
+                                            data: values,
+
+                                            borderColor:
+                                                '#0d6efd',
+
+                                            backgroundColor:
+                                                'rgba(13, 110, 253, 0.1)',
+
+                                            borderWidth: 2,
+
+                                            pointRadius: 2,
+
+                                            pointHoverRadius: 5,
+
+                                            tension: 0.3,
+
+                                            fill: true
+                                        }
+                                    ]
+
+                                },
+
+
+                                options: {
+
+                                    responsive: true,
+
+                                    maintainAspectRatio: false,
+
+                                    interaction: {
+                                        intersect: false,
+
+                                        mode: 'index'
+                                    },
+
+
+                                    plugins: {
+
+                                        legend: {
+                                            display: false
+                                        },
+
+                                        tooltip: {
+                                            enabled: true
+                                        }
+
+                                    },
+
+
+                                    scales: {
+
+                                        x: {
+                                            display: true,
+
+                                            ticks: {
+                                                maxTicksLimit: 8
+                                            }
+                                        },
+
+
+                                        y: {
+                                            display: true,
+
+                                            beginAtZero: false
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+                        );
+
+                    })();
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
+
+    }
+
+);
+
 </script>
+
+
+<script>
+
+/*
+ * ============================================================
+ * AI LIVE MONITOR
+ * ============================================================
+ */
+
+
+const aiGetElement =
+    function (id) {
+        return document.getElementById(id);
+    };
+
+
+let sparkData = [];
+
+
+/*
+ * Prevent overlapping requests.
+ */
+let aiPolling = false;
+
+
+/*
+ * ============================================================
+ * FORMAT VALUE
+ * ============================================================
+ */
+
+function aiFormatValue(value, decimals = 4) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ''
+    ) {
+        return '—';
+    }
+
+
+    if (
+        typeof value === 'number' &&
+        Number.isFinite(value)
+    ) {
+        return value.toFixed(decimals);
+    }
+
+
+    return String(value);
+}
+
+
+/*
+ * ============================================================
+ * NORMALIZE STATUS
+ * ============================================================
+ */
+
+function aiNormalizeStatus(status) {
+
+    if (
+        status === null ||
+        status === undefined
+    ) {
+        return 'UNKNOWN';
+    }
+
+
+    const normalized =
+        String(status)
+            .trim()
+            .toUpperCase();
+
+
+    /*
+     * Support different possible names
+     * returned by the backend.
+     */
+
+    if (
+        normalized === 'SAFE' ||
+        normalized === 'NORMAL' ||
+        normalized === '0' ||
+        normalized === 'UNDER CONTROL'
+    ) {
+        return 'SAFE';
+    }
+
+
+    if (
+        normalized === 'WARNING' ||
+        normalized === 'ATTENTION' ||
+        normalized === '1' ||
+        normalized === 'NEED ATTENTION'
+    ) {
+        return 'WARNING';
+    }
+
+
+    if (
+        normalized === 'CRITICAL' ||
+        normalized === 'DANGER' ||
+        normalized === '2'
+    ) {
+        return 'CRITICAL';
+    }
+
+
+    return 'UNKNOWN';
+}
+
+
+/*
+ * ============================================================
+ * UPDATE STATUS
+ * ============================================================
+ */
+
+function aiUpdateStatus(status) {
+
+    const statusElement =
+        aiGetElement('ai-status');
+
+    if (!statusElement) {
+        return;
+    }
+
+
+    const normalized =
+        aiNormalizeStatus(status);
+
+
+    statusElement.textContent =
+        normalized;
+
+
+    statusElement.className =
+        'ai-status ' + normalized;
+}
+
+
+/*
+ * ============================================================
+ * UPDATE METRIC
+ * ============================================================
+ */
+
+function aiUpdateMetric(
+    elementId,
+    value,
+    decimals = 4
+) {
+
+    const element =
+        aiGetElement(elementId);
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        aiFormatValue(
+            value,
+            decimals
+        );
+}
+
+
+/*
+ * ============================================================
+ * AI POLLING
+ * ============================================================
+ */
+
+async function aiPoll() {
+
+    /*
+     * Do not create overlapping requests.
+     */
+    if (aiPolling) {
+        return;
+    }
+
+
+    aiPolling = true;
+
+
+    try {
+
+        const response =
+            await fetch(
+                '/api/ml/live-status',
+                {
+                    method: 'GET',
+
+                    credentials: 'same-origin',
+
+                    cache: 'no-store',
+
+                    headers: {
+                        'Accept':
+                            'application/json'
+                    }
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                'HTTP ' +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /*
+         * Hide connection error.
+         */
+
+        const errorElement =
+            aiGetElement('ai-error');
+
+        if (errorElement) {
+            errorElement.style.display =
+                'none';
+        }
+
+
+        /*
+         * Update status.
+         */
+
+        aiUpdateStatus(
+            data.status
+        );
+
+
+        /*
+         * Latest telemetry.
+         */
+
+        const latest =
+            data.latest || {};
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Do not use:
+         *
+         * if (latest.step)
+         *
+         * because step = 0 is valid but
+         * evaluates to false.
+         */
+
+        if (
+            latest.step !== null &&
+            latest.step !== undefined
+        ) {
+
+            const stepElement =
+                aiGetElement('ai-step');
+
+            if (stepElement) {
+
+                stepElement.textContent =
+                    latest.step;
+
+            }
+
+        }
+
+
+        /*
+         * Update metrics.
+         */
+
+        aiUpdateMetric(
+            'ai-lstm',
+            latest.lstm_mse,
+            6
+        );
+
+
+        aiUpdateMetric(
+            'ai-gru',
+            latest.gru_error,
+            6
+        );
+
+
+        aiUpdateMetric(
+            'ai-tilt',
+            latest.tilt_x,
+            4
+        );
+
+
+        aiUpdateMetric(
+            'ai-roof',
+            latest.roof_convergence,
+            4
+        );
+
+
+        /*
+         * Update sparkline history.
+         */
+
+        const history =
+            data.history || {};
+
+
+        const lstmHistory =
+            history.lstm_mse;
+
+
+        if (
+            Array.isArray(lstmHistory)
+        ) {
+
+            sparkData =
+                lstmHistory
+                    .map(
+                        value => Number(value)
+                    )
+                    .filter(
+                        value =>
+                            Number.isFinite(value)
+                    );
+
+            drawSpark();
+
+        }
+
+
+        /*
+         * Update timestamp.
+         */
+
+        const updatedElement =
+            aiGetElement('ai-updated');
+
+
+        if (updatedElement) {
+
+            updatedElement.textContent =
+                new Date()
+                    .toLocaleTimeString();
+
+        }
+
+
+        /*
+         * Refresh dashboard image.
+         *
+         * Cache buster ensures the browser
+         * does not display an old image.
+         */
+
+        const image =
+            aiGetElement('ai-plot');
+
+
+        if (image) {
+
+            image.src =
+                '/api/ml/dashboard.png?t=' +
+                Date.now();
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            'AI monitoring error:',
+            error
+        );
+
+
+        const errorElement =
+            aiGetElement('ai-error');
+
+
+        if (errorElement) {
+
+            errorElement.style.display =
+                'block';
+
+        }
+
+    }
+
+
+    finally {
+
+        aiPolling = false;
+
+    }
+
+}
+
+
+/*
+ * ============================================================
+ * DRAW SPARKLINE
+ * ============================================================
+ */
+
+function drawSpark() {
+
+    const canvas =
+        aiGetElement('ai-spark');
+
+
+    if (!canvas) {
+        return;
+    }
+
+
+    const context =
+        canvas.getContext('2d');
+
+
+    if (!context) {
+        return;
+    }
+
+
+    /*
+     * Get actual displayed width.
+     */
+
+    const width =
+        canvas.clientWidth || 600;
+
+
+    /*
+     * Use device pixel ratio for
+     * sharper rendering.
+     */
+
+    const ratio =
+        window.devicePixelRatio || 1;
+
+
+    const height =
+        120;
+
+
+    canvas.width =
+        width * ratio;
+
+
+    canvas.height =
+        height * ratio;
+
+
+    canvas.style.height =
+        height + 'px';
+
+
+    context.setTransform(
+        ratio,
+        0,
+        0,
+        ratio,
+        0,
+        0
+    );
+
+
+    context.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+     * Need at least two points.
+     */
+
+    if (
+        !Array.isArray(sparkData) ||
+        sparkData.length < 2
+    ) {
+
+        /*
+         * Draw a subtle "no data" message.
+         */
+
+        context.fillStyle =
+            '#64748b';
+
+        context.font =
+            '12px JetBrains Mono, Courier New, monospace';
+
+        context.fillText(
+            'Waiting for telemetry...',
+            12,
+            height / 2
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Remove invalid values.
+     */
+
+    const values =
+        sparkData.filter(
+            value =>
+                Number.isFinite(
+                    Number(value)
+                )
+        )
+        .map(
+            value =>
+                Number(value)
+        );
+
+
+    if (values.length < 2) {
+        return;
+    }
+
+
+    let maximum =
+        Math.max(...values);
+
+
+    let minimum =
+        Math.min(...values);
+
+
+    /*
+     * Avoid zero range.
+     */
+
+    let range =
+        maximum - minimum;
+
+
+    if (range === 0) {
+        range = 1;
+    }
+
+
+    /*
+     * Add small vertical padding.
+     */
+
+    const padding =
+        10;
+
+
+    const usableHeight =
+        height -
+        padding * 2;
+
+
+    /*
+     * Draw line.
+     */
+
+    context.beginPath();
+
+
+    context.lineWidth =
+        2;
+
+
+    context.strokeStyle =
+        '#38bdf8';
+
+
+    values.forEach(
+        function (value, index) {
+
+            const x =
+                (
+                    index /
+                    (values.length - 1)
+                ) *
+                width;
+
+
+            const normalized =
+                (
+                    value -
+                    minimum
+                ) /
+                range;
+
+
+            const y =
+                height -
+                padding -
+                normalized *
+                usableHeight;
+
+
+            if (index === 0) {
+
+                context.moveTo(
+                    x,
+                    y
+                );
+
+            }
+            else {
+
+                context.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+    );
+
+
+    context.stroke();
+
+
+    /*
+     * Draw min/max labels.
+     */
+
+    context.fillStyle =
+        '#64748b';
+
+
+    context.font =
+        '10px JetBrains Mono, Courier New, monospace';
+
+
+    context.fillText(
+        maximum.toFixed(4),
+        8,
+        12
+    );
+
+
+    context.fillText(
+        minimum.toFixed(4),
+        8,
+        height - 4
+    );
+
+}
+
+
+/*
+ * ============================================================
+ * MANUAL TEST TICK
+ * ============================================================
+ */
+
+async function aiManualTick() {
+
+    const button =
+        aiGetElement(
+            'ai-test-btn'
+        );
+
+
+    /*
+     * Disable button while request
+     * is being processed.
+     */
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            '⏳ Injecting...';
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                '/api/ml/simulate',
+                {
+                    method: 'POST',
+
+                    credentials: 'same-origin',
+
+                    headers: {
+                        'Accept':
+                            'application/json'
+                    }
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Simulation request failed: HTTP ' +
+                response.status
+            );
+
+        }
+
+
+        /*
+         * Immediately refresh telemetry
+         * after the test tick.
+         */
+
+        await aiPoll();
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            'Manual AI tick failed:',
+            error
+        );
+
+        const errorElement =
+            aiGetElement('ai-error');
+
+
+        if (errorElement) {
+
+            errorElement.textContent =
+                'Unable to inject test tick.';
+
+            errorElement.style.display =
+                'block';
+
+        }
+
+    }
+
+
+    finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                '🧪 Inject Test Tick';
+
+        }
+
+    }
+
+}
+
+
+/*
+ * ============================================================
+ * INITIALIZATION
+ * ============================================================
+ */
+
+
+/*
+ * Initial request immediately.
+ */
+
+aiPoll();
+
+
+/*
+ * Poll every 2 seconds.
+ */
+
+const aiPollingInterval =
+    setInterval(
+        aiPoll,
+        2000
+    );
+
+
+/*
+ * Redraw sparkline when the
+ * browser window changes size.
+ */
+
+window.addEventListener(
+    'resize',
+    function () {
+
+        drawSpark();
+
+    }
+);
+
+
+/*
+ * Clean up polling if this page
+ * is being unloaded.
+ */
+
+window.addEventListener(
+    'beforeunload',
+    function () {
+
+        clearInterval(
+            aiPollingInterval
+        );
+
+    }
+);
+
+</script>
+
 {% endblock %}

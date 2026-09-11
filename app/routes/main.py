@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort,jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Mine, Node, SensorData, AnalysisLog, Alert, User
@@ -15,10 +15,12 @@ def dashboard():
     total_workers = db.session.query(db.func.sum(Mine.workers_count)).scalar() or 0
 
     if current_user.role == 'admin':
-        mines = Mine.query.all()
+        mines = Mine.query.order_by(Mine.id.asc()).all()
     else:
         mines = current_user.mines
+        
 
+        
     return render_template('dashboard.html',
                            total_mines=total_mines,
                            total_nodes=total_nodes,
@@ -32,7 +34,7 @@ def mine_detail(mine_id):
     mine = Mine.query.get_or_404(mine_id)
     if current_user.role != 'admin' and mine not in current_user.mines:
         abort(403)
-    nodes = mine.nodes
+    nodes = sorted(mine.nodes, key=lambda node: node.id)
     return render_template('mine_detail.html', mine=mine, nodes=nodes)
 
 @main_bp.route('/node/<int:node_id>')
@@ -88,7 +90,8 @@ def send_alert():
             alert = Alert(triggered_by_user_id=current_user.id,
                           target_type='node', target_id=node.id,
                           message=message, is_automatic=False,
-                          node_id=node.id)
+                          node_id=node.id
+            )
         elif target_type == 'mine':
             mine_id = request.form.get('mine_id')
             if not mine_id:
@@ -109,7 +112,7 @@ def send_alert():
                           mine_id=mine.id)
         else:
             flash('Invalid target type', 'danger')
-            return redirect(url_for('user.send_alert'))
+            return redirect(url_for('main.send_alert'))
 
         db.session.add(alert)
         db.session.commit()
@@ -142,5 +145,39 @@ def mark_node_fixed(node_id):
         db.session.add(mine)
     db.session.commit()
     flash(f'Node {node.name} marked as fixed', 'success')
-    return redirect(url_for('main.mine_detail', mine_id=request.form.get('mine_id', type=int) or node.mines[0].id if node.mines else 'dashboard'))
-    
+    next_mine_id = request.form.get('mine_id', type=int)
+
+    if not next_mine_id:
+        first_mine = (
+            node.mines.first()
+            if hasattr(node.mines, "first")
+            else (node.mines[0] if node.mines else None)
+        )
+        next_mine_id = first_mine.id if first_mine else None
+
+    if next_mine_id:
+        return redirect(url_for('main.mine_detail', mine_id=next_mine_id))
+
+    return redirect(url_for('main.dashboard'))
+
+@main_bp.route('/mines/map')
+@login_required
+@role_required('engineer', 'supervisor','admin')
+def mines_map():
+    # Get mines accessible to current user
+    if current_user.role == 'admin':
+        mines = Mine.query.all()
+    else:
+        mines = current_user.mines   # list of Mine objects
+
+    data = []
+    for mine in mines:
+        if mine.x is not None and mine.y is not None:
+            data.append({
+                'id': mine.id,
+                'name': mine.name,
+                'x': mine.x,
+                'y': mine.y,
+                'status': mine.current_status
+            })
+    return jsonify(data)

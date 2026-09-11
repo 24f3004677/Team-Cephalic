@@ -2,31 +2,39 @@
 {% block title %}Create User{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-	<div class="col-md-6 col-lg-4">
-		<h1>Create User</h1>
-		<form method="POST">
-		    <div class="mb-3">
-		        <label for="username" class="form-label">Username</label>
-		        <input type="text" class="form-control" id="username" name="username" required>
-		    </div>
-		    <div class="mb-3">
-		        <label for="email" class="form-label">Email</label>
-		        <input type="email" class="form-control" id="email" name="email" required>
-		    </div>
-		    <div class="mb-3">
-		        <label for="password" class="form-label">Password</label>
-		        <input type="password" class="form-control" id="password" name="password" minlength="6" required>
-		    </div>
-		    <div class="mb-3">
-		        <label for="role" class="form-label">Role</label>
-		        <select class="form-select" id="role" name="role" required>
-		            <option value="engineer">Engineer</option>
-		            <option value="supervisor">Supervisor</option>
-		        </select>
-		    </div>
-		    <button type="submit" class="btn btn-primary">Create</button>
-		    <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
-		</form>
-	</div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="fas fa-user-plus me-2 text-primary"></i>Create Staff Account
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="johndoe">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="john@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" minlength="6" required placeholder="At least 6 characters">
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="engineer">Engineer</option>
+                            <option value="supervisor">Supervisor</option>
+                        </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create</button>
+                        <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
