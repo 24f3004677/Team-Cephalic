@@ -4,12 +4,17 @@ Reads JSON lines from the ESP32 gateway over USB serial and persists
 each reading into the SensorData table.
 """
 import json
+import importlib
 import threading
 import time
 from datetime import datetime
 
-import serial
-import serial.tools.list_ports
+try:
+    serial = importlib.import_module("serial")
+    list_ports = importlib.import_module("serial.tools.list_ports")
+except ImportError:
+    serial = None
+    list_ports = None
 
 from app.models import db, SensorData, Node
 
@@ -21,7 +26,9 @@ _app = None
 
 
 def _find_esp32_port():
-    ports = serial.tools.list_ports.comports()
+    if list_ports is None:
+        return None
+    ports = list_ports.comports()
     for p in ports:
         desc = (p.description or "").upper()
         if any(k in desc for k in ("ESP32", "CH340", "CP210", "USB SERIAL")):
@@ -54,6 +61,9 @@ def _store_payload(payload):
 
 
 def _loop():
+    if serial is None:
+        print("[SERIAL] pyserial is not installed; bridge disabled")
+        return
     port = SERIAL_PORT or _find_esp32_port()
     if port is None:
         print("[SERIAL] No ESP32 port detected; bridge disabled")
