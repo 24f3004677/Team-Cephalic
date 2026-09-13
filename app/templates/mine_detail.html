@@ -546,6 +546,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(`Danger banner updated: ${dangerNodes.length} nodes in danger`);
     }
 
+
     /* =========================================
        ACKNOWLEDGE DANGER
     ========================================= */
@@ -639,20 +640,22 @@ document.addEventListener("DOMContentLoaded", function () {
             if (previousDangerCount > 0) {
                 previousDangerCount = 0;
                 if (dangerAcknowledged) {
-                    dangerAcknowledged = false;
+                    dangerAcknowledged = true;      
+                    soundAlarm.stop();
                     const btn = document.querySelector('#danger-alert-banner .btn-outline-light');
                     if (btn) {
                         btn.innerHTML = '<i class="fas fa-check"></i> Acknowledge';
                         btn.disabled = false;
                         btn.classList.remove('btn-success');
                         btn.classList.add('btn-outline-light');
-                    }
-                }
-                stopAlarm();
-                updateDangerBanner([]);
             }
         }
+        stopAlarm();
+        updateDangerBanner([]);
     }
+}
+    }
+
 
     /* =========================================
        GET NODE STATUS FROM PAGE

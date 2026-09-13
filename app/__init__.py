@@ -43,19 +43,42 @@ def create_app(config_class=Config):
         if app.config.get('AUTO_CREATE_DB'):
             db.create_all()
 
-        if User.query.filter_by(role='admin').first() is None:
-            admin = User(username='admin', email='admin@mine.com', role='admin')
+        # Seed admin if missing OR update password if admin exists but can't log in
+        admin = User.query.filter_by(role='admin').first()
+        if admin is None:
+            admin = User(
+                username='admin',
+                email='admin@mine.com',
+                role='admin',
+                is_blacklisted=False,
+            )
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("Default admin created: username='admin', password='admin123'")
+            print("✅ Default admin created: email='admin@mine.com', username='admin', password='admin123'")
+        else:
+            # Ensure admin is not blacklisted
+            if admin.is_blacklisted:
+                admin.is_blacklisted = False
+                db.session.commit()
+                print("⚠️  Admin was blacklisted — un-blacklisted.")
+            # Safety: re-set password if you forgot it
+            # (uncomment the two lines below ONLY if you're locked out)
+            # admin.set_password('admin123')
+            # db.session.commit()
 
     # ---- Start background workers AFTER tables exist ----
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
-        from app.ml_engine import start_background_engine
-        from app.serial_bridge import start_serial_bridge
+        try:
+            from app.ml_engine import start_background_engine
+            start_background_engine(app)
+        except Exception as e:
+            print(f"[ML-BG] Failed to start: {e}")
 
-        start_background_engine(app)
-        start_serial_bridge(app)
+        try:
+            from app.serial_bridge import start_serial_bridge
+            start_serial_bridge(app)
+        except Exception as e:
+            print(f"[SERIAL] Failed to start: {e}")
 
     return app

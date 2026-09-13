@@ -90,9 +90,10 @@ class Node(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(255))
     current_status = db.Column(db.String(20), default='normal')
+    manually_fixed_until = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    x = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container width)
-    y = db.Column(db.Float, nullable=True)   # 0-100 (percentage of container height)
+    x = db.Column(db.Float, nullable=True)
+    y = db.Column(db.Float, nullable=True)
 
     # Relationships
     sensor_data = db.relationship('SensorData', backref='node', lazy='dynamic')

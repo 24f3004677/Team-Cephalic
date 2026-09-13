@@ -130,21 +130,24 @@ def send_alert():
 
 @main_bp.route('/node/<int:node_id>/mark-fixed', methods=['POST'])
 @login_required
+
 def mark_node_fixed(node_id):
     node = Node.query.get_or_404(node_id)
-    # Access control: admin can fix any node; engineer/supervisor only nodes in their mines
+    # Access control
     if current_user.role != 'admin':
         if not any(mine in current_user.mines for mine in node.mines):
             abort(403)
-    # Update node status to normal
+    # Mark node as normal with a 5-minute cooldown
     node.current_status = 'normal'
+    from datetime import datetime, timedelta
+    node.manually_fixed_until = datetime.utcnow() + timedelta(minutes=5)
     db.session.add(node)
-    # Update status of all mines that contain this node
     for mine in node.mines:
         mine.update_status_from_nodes()
         db.session.add(mine)
     db.session.commit()
     flash(f'Node {node.name} marked as fixed', 'success')
+
     next_mine_id = request.form.get('mine_id', type=int)
 
     if not next_mine_id:
