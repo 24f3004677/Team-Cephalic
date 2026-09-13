@@ -1,0 +1,23 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Local environment
+.env
+
+# Local database
+instance/
+
+# Generated files
+app/static/scientific_dashboard.png
+app/static/telemetry_log.csv
+app/static/sounds/
+
+# OS files
+.DS_Store
+Thumbs.db

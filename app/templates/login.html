@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MINE-SAFE | Secure Sign In</title>
-    <!-- Keep the existing style; it's already attractive -->
-    <!-- We'll keep the same CSS but maybe add a few improvements for consistency -->
+    <title>Bhu-Rakshak | Secure Sign In</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,10 +26,7 @@
             background-size: 60px 60px;
             transform: perspective(650px) rotateX(55deg);
         }
-        .circle {
-            position: absolute; border-radius: 50%;
-            border: 1px solid rgba(0,160,215,0.10);
-        }
+        .circle { position: absolute; border-radius: 50%; border: 1px solid rgba(0,160,215,0.10); }
         .circle-one { width: 430px; height: 430px; left: -230px; top: -220px; }
         .circle-two { width: 550px; height: 550px; right: -280px; bottom: -300px; border-color: rgba(235,175,20,0.10); }
         .topbar {
@@ -206,9 +201,11 @@
                     </div>
                 </div>
 
-                {% with messages = get_flashed_messages() %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
-                        <div class="error">{{ messages[0] }}</div>
+                        {% for category, message in messages %}
+                            <div class="error">{{ message }}</div>
+                        {% endfor %}
                     {% endif %}
                 {% endwith %}
 
@@ -220,7 +217,7 @@
 
                 <div class="demo">
                     SIH DEMO ACCESS<br>
-                    Email: <b>admin@mine.com</b> &nbsp; | &nbsp; Password: <b>admin123</b>
+                    Email: <b>admin@mine.com</b> &nbsp;|&nbsp; Username: <b>admin</b> &nbsp;|&nbsp; Password: <b>admin123</b>
                 </div>
             </form>
         </section>
@@ -228,7 +225,7 @@
 </main>
 
 <footer class="footer">
-    MINE-SAFE © 2026 &nbsp; | &nbsp; Intelligent Mine Safety & Monitoring Platform &nbsp; | &nbsp; SIH PROJECT PROTOTYPE
+    Bhu-Rakshak © 2026 &nbsp; | &nbsp; Intelligent Mine Safety & Monitoring Platform &nbsp; | &nbsp; SIH PROJECT PROTOTYPE
 </footer>
 
 <script>
