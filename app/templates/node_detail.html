@@ -30,6 +30,70 @@
 
 
 <!-- ============================================================
+     FILTER BAR
+============================================================ -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <strong class="me-2"><i class="fas fa-filter me-1 text-primary"></i>Time range:</strong>
+
+            <div class="btn-group btn-group-sm flex-wrap" role="group" id="range-buttons">
+                <button type="button" class="btn btn-outline-primary" data-range="5m">Last 5 min</button>
+                <button type="button" class="btn btn-outline-primary" data-range="10m">Last 10 min</button>
+                <button type="button" class="btn btn-outline-primary" data-range="30m">Last 30 min</button>
+                <button type="button" class="btn btn-outline-primary active" data-range="1h">Last 1 hr</button>
+                <button type="button" class="btn btn-outline-primary" data-range="5h">Last 5 hr</button>
+                <button type="button" class="btn btn-outline-primary" data-range="12h">Last 12 hr</button>
+                <button type="button" class="btn btn-outline-primary" data-range="1d">Last 1 day</button>
+                <button type="button" class="btn btn-outline-primary" data-range="5d">Last 5 days</button>
+                <button type="button" class="btn btn-outline-primary" data-range="custom">Custom</button>
+            </div>
+        </div>
+
+        <div id="custom-range" class="row g-2 align-items-end mb-2" style="display:none;">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Start</label>
+                <input type="datetime-local" id="custom-start" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small mb-1">End</label>
+                <input type="datetime-local" id="custom-end" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+                <button type="button" id="apply-custom" class="btn btn-sm btn-primary w-100">
+                    <i class="fas fa-check"></i> Apply Custom Range
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+            <small class="text-muted me-2">
+                <i class="fas fa-clock me-1"></i>Auto-refresh:
+            </small>
+            <select id="refresh-interval" class="form-select form-select-sm" style="width:auto;">
+                <option value="5000">Every 5 s</option>
+                <option value="10000" selected>Every 10 s</option>
+                <option value="30000">Every 30 s</option>
+                <option value="60000">Every 1 min</option>
+                <option value="0">Off</option>
+            </select>
+
+            <span id="last-updated" class="text-muted small ms-2"></span>
+
+            <div class="ms-auto d-flex gap-2">
+                <button type="button" id="download-sensor-csv" class="btn btn-sm btn-success">
+                    <i class="fas fa-download"></i> Sensor CSV
+                </button>
+                <button type="button" id="download-analysis-csv" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-download"></i> Analysis CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
      NODE INFORMATION
 ============================================================ -->
 <div class="row g-4 mb-4">
@@ -106,83 +170,38 @@
 
 
 <!-- ============================================================
-     HISTORICAL SENSOR DATA
+     HISTORICAL SENSOR DATA  (AJAX-driven)
 ============================================================ -->
 <h3 class="mb-3">
     <i class="fas fa-chart-line me-2 text-primary"></i>
-    Sensor Data (last readings)
+    Sensor Data
 </h3>
 
-<div class="row g-4">
+<div id="no-sensor-data" class="alert alert-info" style="display:none;">
+    <i class="fas fa-info-circle me-2"></i>
+    No sensor data available for the selected time range.
+</div>
 
-    {% if sensor_data %}
-
-        {% for sensor_type, data_list in sensor_data.items() %}
-
-            <div class="col-md-6">
-
-                <div class="card h-100">
-
-                    <div class="card-header bg-white fw-bold">
-                        {{ sensor_type }}
-                    </div>
-
-                    <div class="card-body">
-
-                        {% if data_list %}
-
-                            <div style="position: relative; height: 250px;">
-                                <canvas
-                                    id="chart-{{ sensor_type|replace(' ', '-')|replace('/', '-') }}"
-                                ></canvas>
-                            </div>
-
-                        {% else %}
-
-                            <div class="alert alert-info mb-0">
-                                <i class="fas fa-info-circle me-2"></i>
-                                No data available for {{ sensor_type }}.
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        {% endfor %}
-
-    {% else %}
-
-        <div class="col-12">
-
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                No sensor data available.
-            </div>
-
-        </div>
-
-    {% endif %}
-
+<div class="row g-4" id="sensor-charts-container">
+    <!-- Charts created by JavaScript -->
 </div>
 
 
 <!-- ============================================================
-     ANALYSIS HISTORY
+     ANALYSIS HISTORY  (AJAX-driven, all rows in DOM, ~8 visible)
 ============================================================ -->
 <h3 class="mt-5 mb-3">
     <i class="fas fa-history me-2 text-primary"></i>
     Analysis History
 </h3>
 
-<div class="table-responsive">
+<div
+    class="table-responsive"
+    style="height: 400px; overflow-y: auto; border-radius: 12px;"
+>
+    <table class="table table-hover align-middle mb-0" id="analysis-table">
 
-    <table class="table table-hover align-middle">
-
-        <thead>
+        <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
             <tr>
                 <th>Timestamp</th>
                 <th>Status</th>
@@ -190,73 +209,17 @@
             </tr>
         </thead>
 
-        <tbody>
-
-            {% if analysis_history %}
-
-                {% for log in analysis_history %}
-
-                    <tr>
-
-                        <td>
-                            {% if log.timestamp %}
-                                {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-
-                        <td>
-
-                            {% if log.status == 0 %}
-
-                                <span class="badge bg-success">
-                                    Under Control
-                                </span>
-
-                            {% elif log.status == 1 %}
-
-                                <span class="badge bg-warning text-dark">
-                                    Need Attention
-                                </span>
-
-                            {% else %}
-
-                                <span class="badge bg-danger">
-                                    Danger
-                                </span>
-
-                            {% endif %}
-
-                        </td>
-
-                        <td>
-                            {% if log.mine %}
-                                {{ log.mine.name }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            {% else %}
-
-                <tr>
-                    <td colspan="3" class="text-center text-muted py-4">
-                        No analysis history available.
-                    </td>
-                </tr>
-
-            {% endif %}
-
+        <tbody id="analysis-tbody">
+            <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                    Loading…
+                </td>
+            </tr>
         </tbody>
 
     </table>
-
 </div>
+<br><br>
 
 
 <!-- ============================================================
@@ -697,188 +660,300 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
+<!-- ============================================================
+     FILTER + AJAX SENSOR DATA + AJAX ANALYSIS
+============================================================ -->
 <script>
+(function () {
+    "use strict";
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    const NODE_ID = {{ node.id }};
 
-        /*
-         * ========================================================
-         * HISTORICAL SENSOR CHARTS
-         * ========================================================
-         */
-
-        {% if sensor_data %}
-
-            {% for sensor_type, data_list in sensor_data.items() %}
-
-                {% if data_list %}
-
-                    (function () {
-
-                        const canvasId =
-                            {{ ('chart-' ~ sensor_type|replace(' ', '-')|replace('/', '-'))|tojson }};
-
-                        const canvas =
-                            document.getElementById(canvasId);
-
-                        if (!canvas) {
-                            return;
-                        }
-
-
-                        const context =
-                            canvas.getContext('2d');
-
-                        if (!context) {
-                            return;
-                        }
-
-
-                        /*
-                         * Reverse a copy so the original
-                         * Python/Jinja data is not modified.
-                         */
-                        const sensorData = [
-                            {% for d in data_list|reverse %}
-
-                                {
-                                    timestamp:
-                                        {{ d.timestamp|tojson }},
-
-                                    value:
-                                        {{ d.value|tojson }}
-                                }
-
-                                {% if not loop.last %},{% endif %}
-
-                            {% endfor %}
-                        ];
-
-
-                        const labels =
-                            sensorData.map(
-                                item => item.timestamp
-                            );
-
-
-                        const values =
-                            sensorData.map(
-                                item => item.value
-                            );
-
-
-                        new Chart(
-                            context,
-                            {
-                                type: 'line',
-
-                                data: {
-
-                                    labels: labels,
-
-                                    datasets: [
-                                        {
-                                            label:
-                                                {{ sensor_type|tojson }},
-
-                                            data: values,
-
-                                            borderColor:
-                                                '#0d6efd',
-
-                                            backgroundColor:
-                                                'rgba(13, 110, 253, 0.1)',
-
-                                            borderWidth: 2,
-
-                                            pointRadius: 2,
-
-                                            pointHoverRadius: 5,
-
-                                            tension: 0.3,
-
-                                            fill: true
-                                        }
-                                    ]
-
-                                },
-
-
-                                options: {
-
-                                    responsive: true,
-
-                                    maintainAspectRatio: false,
-
-                                    interaction: {
-                                        intersect: false,
-
-                                        mode: 'index'
-                                    },
-
-
-                                    plugins: {
-
-                                        legend: {
-                                            display: false
-                                        },
-
-                                        tooltip: {
-                                            enabled: true
-                                        }
-
-                                    },
-
-
-                                    scales: {
-
-                                        x: {
-                                            display: true,
-
-                                            ticks: {
-                                                maxTicksLimit: 8
-                                            }
-                                        },
-
-
-                                        y: {
-                                            display: true,
-
-                                            beginAtZero: false
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-                        );
-
-                    })();
-
-                {% endif %}
-
-            {% endfor %}
-
-        {% endif %}
-
+    function sanitizeId(s) {
+        return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
     }
 
-);
+    function toLocalInputValue(date) {
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+             + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
 
+    const state = {
+        range: '1h',
+        start: null,
+        end: null,
+        refreshTimer: null,
+        refreshMs: 10000
+    };
+
+    const charts = {};
+
+    function buildQuery() {
+        const params = new URLSearchParams();
+        params.set('range', state.range);
+        if (state.range === 'custom') {
+            if (state.start) params.set('start', state.start);
+            if (state.end)   params.set('end', state.end);
+        }
+        return params.toString();
+    }
+
+    /* --------------------------------------------------------
+       SENSOR CHARTS
+    -------------------------------------------------------- */
+    function ensureChartContainer(sensorType) {
+        const container = document.getElementById('sensor-charts-container');
+        const safe = sanitizeId(sensorType);
+        let wrapper = document.getElementById('chart-wrapper-' + safe);
+
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'col-md-6';
+            wrapper.id = 'chart-wrapper-' + safe;
+            wrapper.innerHTML = `
+                <div class="card h-100">
+                    <div class="card-header bg-white fw-bold">${sensorType}</div>
+                    <div class="card-body">
+                        <div style="position:relative;height:250px;">
+                            <canvas id="chart-${safe}"></canvas>
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(wrapper);
+        }
+        return document.getElementById('chart-' + safe);
+    }
+
+    function updateCharts(data) {
+        const container = document.getElementById('sensor-charts-container');
+        const noData = document.getElementById('no-sensor-data');
+        const sensorTypes = Object.keys(data || {});
+
+        if (sensorTypes.length === 0) {
+            noData.style.display = 'block';
+            container.innerHTML = '';
+            for (const k in charts) { charts[k].destroy(); delete charts[k]; }
+            return;
+        }
+        noData.style.display = 'none';
+
+        Array.from(container.children).forEach(child => {
+            const id = child.id || '';
+            if (!id.startsWith('chart-wrapper-')) return;
+            const safe = id.replace('chart-wrapper-', '');
+            const stillExists = sensorTypes.some(t => sanitizeId(t) === safe);
+            if (!stillExists) {
+                if (charts[safe]) { charts[safe].destroy(); delete charts[safe]; }
+                child.remove();
+            }
+        });
+
+        sensorTypes.forEach(type => {
+            const series = data[type] || [];
+            const canvas = ensureChartContainer(type);
+            const safe = sanitizeId(type);
+
+            const labels = series.map(p => p.timestamp);
+            const values = series.map(p => p.value);
+
+            if (charts[safe]) {
+                charts[safe].data.labels = labels;
+                charts[safe].data.datasets[0].data = values;
+                charts[safe].update('none');
+            } else {
+                charts[safe] = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: type,
+                            data: values,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                        scales: {
+                            x: { display: true, ticks: { maxTicksLimit: 8 } },
+                            y: { display: true, beginAtZero: false }
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /* --------------------------------------------------------
+       ANALYSIS TABLE  — renders ALL rows; container scrolls
+    -------------------------------------------------------- */
+    function updateAnalysisTable(rows) {
+        const tbody = document.getElementById('analysis-tbody');
+
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">No analysis history available.</td></tr>';
+            return;
+        }
+
+        // Render every row; the wrapping <div> has a fixed height
+        // so only ~8 rows are visible at a time, with a scrollbar.
+        let html = '';
+        rows.forEach(r => {
+            let badge = '';
+            if (r.status === 0) {
+                badge = '<span class="badge bg-success">Under Control</span>';
+            } else if (r.status === 1) {
+                badge = '<span class="badge bg-warning text-dark">Need Attention</span>';
+            } else {
+                badge = '<span class="badge bg-danger">Danger</span>';
+            }
+            html += `<tr><td>${r.timestamp}</td><td>${badge}</td><td>${r.mine}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    /* --------------------------------------------------------
+       FETCHERS
+    -------------------------------------------------------- */
+    async function fetchSensorData() {
+        try {
+            const res = await fetch(
+                `/api/node/${NODE_ID}/sensor-data?${buildQuery()}`,
+                { credentials: 'same-origin', cache: 'no-store' }
+            );
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await res.json();
+            updateCharts(payload.data);
+            document.getElementById('last-updated').textContent =
+                'Updated ' + new Date().toLocaleTimeString();
+        } catch (err) {
+            console.error('[sensor]', err);
+        }
+    }
+
+    async function fetchAnalysis() {
+        try {
+            const res = await fetch(
+                `/api/node/${NODE_ID}/analysis?${buildQuery()}`,
+                { credentials: 'same-origin', cache: 'no-store' }
+            );
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await res.json();
+            updateAnalysisTable(payload.analysis);
+        } catch (err) {
+            console.error('[analysis]', err);
+        }
+    }
+
+    function refreshAll() {
+        fetchSensorData();
+        fetchAnalysis();
+    }
+
+    /* --------------------------------------------------------
+       AUTO-REFRESH
+    -------------------------------------------------------- */
+    function scheduleRefresh() {
+        if (state.refreshTimer) clearInterval(state.refreshTimer);
+        if (state.refreshMs > 0) {
+            state.refreshTimer = setInterval(refreshAll, state.refreshMs);
+        }
+    }
+
+    /* --------------------------------------------------------
+       RANGE BUTTONS
+    -------------------------------------------------------- */
+    function activateRangeButton(rangeKey) {
+        document.querySelectorAll('#range-buttons .btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.range === rangeKey);
+        });
+    }
+
+    document.getElementById('range-buttons').addEventListener('click', function (e) {
+        const btn = e.target.closest('button[data-range]');
+        if (!btn) return;
+
+        const rangeKey = btn.dataset.range;
+        activateRangeButton(rangeKey);
+
+        if (rangeKey === 'custom') {
+            document.getElementById('custom-range').style.display = 'flex';
+            if (!document.getElementById('custom-start').value) {
+                const now = new Date();
+                const past = new Date(now.getTime() - 60 * 60 * 1000);
+                document.getElementById('custom-start').value = toLocalInputValue(past);
+                document.getElementById('custom-end').value = toLocalInputValue(now);
+            }
+            return;
+        }
+
+        document.getElementById('custom-range').style.display = 'none';
+        state.range = rangeKey;
+        state.start = null;
+        state.end = null;
+        refreshAll();
+    });
+
+    document.getElementById('apply-custom').addEventListener('click', function () {
+        const s = document.getElementById('custom-start').value;
+        const e = document.getElementById('custom-end').value;
+
+        if (!s || !e) { alert('Please select both start and end times.'); return; }
+
+        const sd = new Date(s);
+        const ed = new Date(e);
+
+        if (isNaN(sd.getTime()) || isNaN(ed.getTime())) { alert('Invalid date/time.'); return; }
+        if (sd > ed) { alert('Start must be before end.'); return; }
+
+        state.range = 'custom';
+        state.start = sd.toISOString();
+        state.end = ed.toISOString();
+        refreshAll();
+    });
+
+    /* --------------------------------------------------------
+       REFRESH INTERVAL
+    -------------------------------------------------------- */
+    document.getElementById('refresh-interval').addEventListener('change', function () {
+        state.refreshMs = parseInt(this.value, 10) || 0;
+        scheduleRefresh();
+    });
+
+    /* --------------------------------------------------------
+       CSV DOWNLOADS
+    -------------------------------------------------------- */
+    document.getElementById('download-sensor-csv').addEventListener('click', function () {
+        window.location.href = `/api/node/${NODE_ID}/sensor-data/download?${buildQuery()}`;
+    });
+
+    document.getElementById('download-analysis-csv').addEventListener('click', function () {
+        window.location.href = `/api/node/${NODE_ID}/analysis/download?${buildQuery()}`;
+    });
+
+    /* --------------------------------------------------------
+       BOOT
+    -------------------------------------------------------- */
+    refreshAll();
+    scheduleRefresh();
+})();
 </script>
 
 
+<!-- ============================================================
+     AI LIVE MONITOR  (original behaviour preserved)
+============================================================ -->
 <script>
-
-/*
- * ============================================================
- * AI LIVE MONITOR
- * ============================================================
- */
-
 
 const aiGetElement =
     function (id) {
@@ -889,17 +964,8 @@ const aiGetElement =
 let sparkData = [];
 
 
-/*
- * Prevent overlapping requests.
- */
 let aiPolling = false;
 
-
-/*
- * ============================================================
- * FORMAT VALUE
- * ============================================================
- */
 
 function aiFormatValue(value, decimals = 4) {
 
@@ -924,12 +990,6 @@ function aiFormatValue(value, decimals = 4) {
 }
 
 
-/*
- * ============================================================
- * NORMALIZE STATUS
- * ============================================================
- */
-
 function aiNormalizeStatus(status) {
 
     if (
@@ -945,11 +1005,6 @@ function aiNormalizeStatus(status) {
             .trim()
             .toUpperCase();
 
-
-    /*
-     * Support different possible names
-     * returned by the backend.
-     */
 
     if (
         normalized === 'SAFE' ||
@@ -984,12 +1039,6 @@ function aiNormalizeStatus(status) {
 }
 
 
-/*
- * ============================================================
- * UPDATE STATUS
- * ============================================================
- */
-
 function aiUpdateStatus(status) {
 
     const statusElement =
@@ -1013,12 +1062,6 @@ function aiUpdateStatus(status) {
 }
 
 
-/*
- * ============================================================
- * UPDATE METRIC
- * ============================================================
- */
-
 function aiUpdateMetric(
     elementId,
     value,
@@ -1041,17 +1084,8 @@ function aiUpdateMetric(
 }
 
 
-/*
- * ============================================================
- * AI POLLING
- * ============================================================
- */
-
 async function aiPoll() {
 
-    /*
-     * Do not create overlapping requests.
-     */
     if (aiPolling) {
         return;
     }
@@ -1061,10 +1095,12 @@ async function aiPoll() {
 
 
     try {
+
         const nodeId = {{ node.id }};
+
         const response =
             await fetch(
-                '/api/ml/live-status',
+                `/api/ml/live-status?node_id=${nodeId}`,
                 {
                     method: 'GET',
 
@@ -1094,10 +1130,6 @@ async function aiPoll() {
             await response.json();
 
 
-        /*
-         * Hide connection error.
-         */
-
         const errorElement =
             aiGetElement('ai-error');
 
@@ -1107,33 +1139,14 @@ async function aiPoll() {
         }
 
 
-        /*
-         * Update status.
-         */
-
         aiUpdateStatus(
             data.status
         );
 
 
-        /*
-         * Latest telemetry.
-         */
-
         const latest =
             data.latest || {};
 
-
-        /*
-         * IMPORTANT:
-         *
-         * Do not use:
-         *
-         * if (latest.step)
-         *
-         * because step = 0 is valid but
-         * evaluates to false.
-         */
 
         if (
             latest.step !== null &&
@@ -1152,10 +1165,6 @@ async function aiPoll() {
 
         }
 
-
-        /*
-         * Update metrics.
-         */
 
         aiUpdateMetric(
             'ai-lstm',
@@ -1185,10 +1194,6 @@ async function aiPoll() {
         );
 
 
-        /*
-         * Update sparkline history.
-         */
-
         const history =
             data.history || {};
 
@@ -1216,10 +1221,6 @@ async function aiPoll() {
         }
 
 
-        /*
-         * Update timestamp.
-         */
-
         const updatedElement =
             aiGetElement('ai-updated');
 
@@ -1232,13 +1233,6 @@ async function aiPoll() {
 
         }
 
-
-        /*
-         * Refresh dashboard image.
-         *
-         * Cache buster ensures the browser
-         * does not display an old image.
-         */
 
         const image =
             aiGetElement('ai-plot');
@@ -1286,12 +1280,6 @@ async function aiPoll() {
 }
 
 
-/*
- * ============================================================
- * DRAW SPARKLINE
- * ============================================================
- */
-
 function drawSpark() {
 
     const canvas =
@@ -1312,18 +1300,9 @@ function drawSpark() {
     }
 
 
-    /*
-     * Get actual displayed width.
-     */
-
     const width =
         canvas.clientWidth || 600;
 
-
-    /*
-     * Use device pixel ratio for
-     * sharper rendering.
-     */
 
     const ratio =
         window.devicePixelRatio || 1;
@@ -1363,18 +1342,10 @@ function drawSpark() {
     );
 
 
-    /*
-     * Need at least two points.
-     */
-
     if (
         !Array.isArray(sparkData) ||
         sparkData.length < 2
     ) {
-
-        /*
-         * Draw a subtle "no data" message.
-         */
 
         context.fillStyle =
             '#64748b';
@@ -1392,10 +1363,6 @@ function drawSpark() {
 
     }
 
-
-    /*
-     * Remove invalid values.
-     */
 
     const values =
         sparkData.filter(
@@ -1423,10 +1390,6 @@ function drawSpark() {
         Math.min(...values);
 
 
-    /*
-     * Avoid zero range.
-     */
-
     let range =
         maximum - minimum;
 
@@ -1436,10 +1399,6 @@ function drawSpark() {
     }
 
 
-    /*
-     * Add small vertical padding.
-     */
-
     const padding =
         10;
 
@@ -1448,10 +1407,6 @@ function drawSpark() {
         height -
         padding * 2;
 
-
-    /*
-     * Draw line.
-     */
 
     context.beginPath();
 
@@ -1514,10 +1469,6 @@ function drawSpark() {
     context.stroke();
 
 
-    /*
-     * Draw min/max labels.
-     */
-
     context.fillStyle =
         '#64748b';
 
@@ -1542,12 +1493,6 @@ function drawSpark() {
 }
 
 
-/*
- * ============================================================
- * MANUAL TEST TICK
- * ============================================================
- */
-
 async function aiManualTick() {
 
     const button =
@@ -1555,11 +1500,6 @@ async function aiManualTick() {
             'ai-test-btn'
         );
 
-
-    /*
-     * Disable button while request
-     * is being processed.
-     */
 
     if (button) {
 
@@ -1599,11 +1539,6 @@ async function aiManualTick() {
 
         }
 
-
-        /*
-         * Immediately refresh telemetry
-         * after the test tick.
-         */
 
         await aiPoll();
 
@@ -1651,23 +1586,8 @@ async function aiManualTick() {
 }
 
 
-/*
- * ============================================================
- * INITIALIZATION
- * ============================================================
- */
-
-
-/*
- * Initial request immediately.
- */
-
 aiPoll();
 
-
-/*
- * Poll every 2 seconds.
- */
 
 const aiPollingInterval =
     setInterval(
@@ -1675,11 +1595,6 @@ const aiPollingInterval =
         2000
     );
 
-
-/*
- * Redraw sparkline when the
- * browser window changes size.
- */
 
 window.addEventListener(
     'resize',
@@ -1690,11 +1605,6 @@ window.addEventListener(
     }
 );
 
-
-/*
- * Clean up polling if this page
- * is being unloaded.
- */
 
 window.addEventListener(
     'beforeunload',
