@@ -90,7 +90,7 @@ def create_node():
         mine_ids = request.form.getlist('mines')
         x = request.form.get('x', type=float, default=None)
         y = request.form.get('y', type=float, default=None)
-
+        #.order_by(Mine.id.asc())
         node = Node(name=name, description=description, x=x, y=y)
         for mid in mine_ids:
             mine = Mine.query.get(int(mid))
@@ -101,7 +101,7 @@ def create_node():
         flash(f'Node "{name}" created.', 'success')
         return redirect(url_for('admin.list_links'))  # adjust as needed
     # GET: show form
-    mines = Mine.query.all() if current_user.role == 'admin' else current_user.mines.all()
+    mines = Mine.query.order_by(Mine.id.asc()).all() if current_user.role == 'admin' else current_user.mines.all()
     return render_template('create_node.html', mines=mines)
 
 # Assign users to mines (engineer/supervisor)
@@ -110,8 +110,8 @@ def assign_user_to_mine():
     user_id = int(request.form.get('user_id'))
     mine_id = int(request.form.get('mine_id'))
     action = request.form.get('action')  # 'assign' or 'remove'
-    user = User.query.get_or_404(user_id)
-    mine = Mine.query.get_or_404(mine_id)
+    user = User.query.get_or_404(user_id).order_by(User.id.asc()).all()
+    mine = Mine.query.get_or_404(mine_id).order_by(Mine.id.asc()).all()
     if user.role not in ['engineer', 'supervisor']:
         flash('Only engineers and supervisors can be assigned to mines', 'danger')
     else:
