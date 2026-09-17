@@ -12,17 +12,17 @@
     <title>{% block title %}Mine Monitoring{% endblock %}</title>
 
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        href="/static/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
     <link
         rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
     >
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+        href="/static/css/css2.css"
         rel="stylesheet"
     >
 
@@ -197,129 +197,267 @@
         }
 
         /* =====================================================
-           NAVBAR — frosted white glass
-        ===================================================== */
-
-        .navbar {
-            background: var(--glass-bg);
-            backdrop-filter: blur(18px) saturate(160%);
-            -webkit-backdrop-filter: blur(18px) saturate(160%);
-            height: 76px;
-            padding: 0;
-            box-shadow: 0 8px 30px rgba(30, 60, 120, 0.10);
-            border-bottom: 1px solid var(--glass-border);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 9999;
-        }
-
-        .navbar .container-fluid {
-            height: 76px;
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            margin-right: 35px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-        }
-
-        .logo {
-            width: 58px;
-            height: 58px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #38bdf8, #2563eb);
-            color: #fff;
-            font-size: 27px;
-            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.30);
-        }
-
-        .brand-name {
-            color: var(--ink);
-            font-size: 1.55rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            font-size: 1rem;
-            color: var(--ink-soft) !important;
-            transition: all 0.2s ease;
-            padding: 10px 14px !important;
-            border-radius: 10px;
-            white-space: nowrap;
-        }
-
-        .nav-link i {
-            margin-right: 6px;
-        }
-
-        .nav-link:hover {
-            transform: translateY(-1px);
-            color: #1d4ed8 !important;
-            background: rgba(37, 99, 235, 0.08);
-        }
-
-        .user-badge {
-            background: var(--glass-bg-strong);
-            border-radius: 50px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--ink);
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-
-        .user-badge:hover {
-            background: #ffffff;
-        }
-
-        .user-badge i {
-            font-size: 1.1rem;
-            color: var(--accent);
-        }
-
-        .role-badge {
-            background: rgba(37, 99, 235, 0.10);
-            border: 1px solid rgba(37, 99, 235, 0.18);
-            color: #1d4ed8;
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .navbar-toggler {
-            border: 1px solid rgba(15, 23, 42, 0.20);
-            box-shadow: none;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
-
+                   NAVBAR — frosted white glass (glassmorphism)
+                ===================================================== */
+        
+                /* ---- glass design tokens ---- */
+                :root {
+                    --glass-bg:          rgba(255, 255, 255, 0.55);
+                    --glass-bg-strong:   rgba(255, 255, 255, 0.72);
+                    --glass-border:      rgba(255, 255, 255, 0.65);
+                    --glass-border-soft: rgba(148, 163, 184, 0.28);
+                    --glass-blur:        blur(28px) saturate(180%) brightness(1.06);
+                    --glass-shadow:      0 8px 32px rgba(30, 60, 120, 0.12);
+                    --glass-inner:       inset 0 1px 0 rgba(255, 255, 255, 0.90),
+                                         inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+        
+                    --ink:      #0f172a;
+                    --ink-soft: #475569;
+                    --accent:   #2563eb;
+                }
+        
+                .navbar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 76px;
+                    padding: 0;
+                    z-index: 9999;
+        
+                    /* translucent glass surface */
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.62) 0%,
+                        rgba(255, 255, 255, 0.40) 45%,
+                        rgba(255, 255, 255, 0.58) 100%
+                    );
+        
+                    /* the frosted effect */
+                    backdrop-filter: var(--glass-blur);
+                    -webkit-backdrop-filter: var(--glass-blur);
+        
+                    /* edge light + soft depth */
+                    border-bottom: 1px solid var(--glass-border);
+                    box-shadow: var(--glass-shadow), var(--glass-inner);
+        
+                    /* keeps the blur crisp on the edges */
+                    isolation: isolate;
+                }
+        
+                /* ---- diagonal sheen sweeping across the glass ---- */
+                .navbar::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    background: linear-gradient(
+                        115deg,
+                        rgba(255, 255, 255, 0.55) 0%,
+                        rgba(255, 255, 255, 0.10) 28%,
+                        rgba(255, 255, 255, 0.00) 55%,
+                        rgba(255, 255, 255, 0.22) 100%
+                    );
+                    opacity: 0.9;
+                    z-index: -1;
+                }
+        
+                /* ---- hairline bottom accent (glass rim) ---- */
+                .navbar::after {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    height: 1px;
+                    pointer-events: none;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0) 0%,
+                        rgba(255, 255, 255, 0.85) 50%,
+                        rgba(255, 255, 255, 0) 100%
+                    );
+                }
+        
+                .navbar .container-fluid {
+                    position: relative;
+                    height: 76px;
+                    display: flex;
+                    align-items: center;
+                }
+        
+                .navbar-brand {
+                    display: flex;
+                    align-items: center;
+                    text-decoration: none;
+                    margin-right: 35px;
+                }
+        
+                .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 13px;
+                }
+        
+                .logo {
+                    width: 58px;
+                    height: 58px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 14px;
+                    color: #fff;
+                    font-size: 27px;
+        
+                    background: linear-gradient(135deg, #38bdf8, #2563eb);
+                    border: 1px solid rgba(255, 255, 255, 0.45);
+                    box-shadow:
+                        0 8px 22px rgba(37, 99, 235, 0.30),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+                }
+        
+                .brand-name {
+                    color: var(--ink);
+                    font-size: 1.55rem;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    white-space: nowrap;
+                }
+        
+                /* ---- nav links: glass pills on hover ---- */
+                .nav-link {
+                    position: relative;
+                    font-weight: 500;
+                    font-size: 1rem;
+                    color: var(--ink-soft) !important;
+                    padding: 10px 14px !important;
+                    border-radius: 10px;
+                    white-space: nowrap;
+                    border: 1px solid transparent;
+                    transition: all 0.22s ease;
+                }
+        
+                .nav-link i {
+                    margin-right: 6px;
+                }
+        
+                .nav-link:hover {
+                    transform: translateY(-1px);
+                    color: #1d4ed8 !important;
+        
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.75),
+                        rgba(255, 255, 255, 0.45)
+                    );
+                    border-color: rgba(255, 255, 255, 0.75);
+                    backdrop-filter: blur(12px) saturate(160%);
+                    -webkit-backdrop-filter: blur(12px) saturate(160%);
+                    box-shadow:
+                        0 4px 14px rgba(37, 99, 235, 0.14),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+                }
+        
+                /* ---- user badge: small glass pill ---- */
+                .user-badge {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    font-size: 0.9rem;
+                    white-space: nowrap;
+                    color: var(--ink);
+                    border-radius: 50px;
+        
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.75),
+                        rgba(255, 255, 255, 0.45)
+                    );
+                    border: 1px solid rgba(255, 255, 255, 0.70);
+                    backdrop-filter: blur(14px) saturate(170%);
+                    -webkit-backdrop-filter: blur(14px) saturate(170%);
+                    box-shadow:
+                        0 4px 16px rgba(30, 60, 120, 0.10),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+                    transition: all 0.22s ease;
+                }
+        
+                .user-badge:hover {
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.92),
+                        rgba(255, 255, 255, 0.68)
+                    );
+                    box-shadow:
+                        0 6px 20px rgba(30, 60, 120, 0.16),
+                        inset 0 1px 0 rgba(255, 255, 255, 1);
+                }
+        
+                .user-badge i {
+                    font-size: 1.1rem;
+                    color: var(--accent);
+                }
+        
+                /* ---- role badge: tinted glass chip ---- */
+                .role-badge {
+                    padding: 3px 10px;
+                    border-radius: 15px;
+                    font-size: 0.7rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+        
+                    color: #1d4ed8;
+                    background: linear-gradient(
+                        135deg,
+                        rgba(37, 99, 235, 0.16),
+                        rgba(56, 189, 248, 0.10)
+                    );
+                    border: 1px solid rgba(255, 255, 255, 0.60);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.70);
+                }
+        
+                /* ---- toggler: glass button ---- */
+                .navbar-toggler {
+                    border: 1px solid rgba(255, 255, 255, 0.70);
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.45);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+                    transition: all 0.2s ease;
+                }
+        
+                .navbar-toggler:hover {
+                    background: rgba(255, 255, 255, 0.70);
+                }
+        
+                .navbar-toggler:focus {
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+                    outline: none;
+                }
+        
+                /* ---- fallback for browsers without backdrop-filter ---- */
+                @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+                    .navbar {
+                        background: rgba(255, 255, 255, 0.94);
+                    }
+                    .user-badge,
+                    .navbar-toggler {
+                        background: rgba(255, 255, 255, 0.94);
+                    }
+                }
+        
+                /* ---- accessibility: respect reduced transparency ---- */
+                @media (prefers-reduced-transparency: reduce) {
+                    .navbar {
+                        background: rgba(255, 255, 255, 0.96);
+                        backdrop-filter: none;
+                        -webkit-backdrop-filter: none;
+                    }
+                }
         /* =====================================================
            FOOTER — frosted white glass
         ===================================================== */
@@ -347,7 +485,7 @@
 
         .card {
             border: 1px solid var(--glass-border);
-            border-radius: 18px;
+            border-radius: 20px;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0.55));
             backdrop-filter: blur(16px) saturate(160%);
             -webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -374,7 +512,7 @@
 
         /* Templates use .bg-white headers — keep them glass */
         .card-header.bg-white {
-            background: rgba(255, 255, 255, 0.45) !important;
+            background: rgba(255, 255, 255, 0.45) ;
         }
 
         /* Dashboard stat cards — vibrant frosted glass */
@@ -583,10 +721,10 @@
         ===================================================== */
 
         .alert {
-            border-radius: 14px;
-            border: 1px solid transparent;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px;
+            
+            
         }
 
         .alert-success {
@@ -1007,7 +1145,7 @@
     </footer>
 
     <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        src="/static/js/bootstrap.bundle.min.js"
     ></script>
 
     {% block extra_js %}{% endblock %}

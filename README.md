@@ -10,3 +10,10 @@
 - initial circuit
 - need to add water level sensor (custom made)
 - need to add senseng for the things that they have not asked for
+
+# task left for phse 2
+- creating the offline model (60%)
+- pushing to the esp32
+- connecting with the website 
+- final prototype demmostration 
+- website edit staff option needed to be added.

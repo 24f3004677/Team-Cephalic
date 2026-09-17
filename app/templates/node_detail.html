@@ -4,9 +4,42 @@
 
 {% block content %}
 
+<style>
+.card_node {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden; /* Crucial: clips the pseudo-element to the rounded corners */
+    
+    /* Keep the glass effects on the main element */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: var(--ink);
+    z-index: 1;
+    padding:20px;
+    border-radius:20px;
+}
+
+/* The image lives on a pseudo-element behind the glass */
+.card_node::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('/static/img/background_6.jpg');
+    background-size: cover;
+    background-position: center;
+    
+    /* Lower the opacity so the card still looks somewhat transparent/glassy */
+    opacity: 0.2; 
+    z-index: -1; /* Pushes it behind the card's content and borders */
+}
+</style>
+
 <!-- ============================================================
      NODE HEADER
 ============================================================ -->
+<div class="card_node">
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>
         <i class="fas fa-microchip me-2 text-primary"></i>
@@ -29,10 +62,11 @@
 </div>
 
 
+
 <!-- ============================================================
      FILTER BAR
 ============================================================ -->
-<div class="card mb-4">
+<div class="card_node mb-4">
     <div class="card-body">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <strong class="me-2"><i class="fas fa-filter me-1 text-primary"></i>Time range:</strong>
@@ -91,6 +125,7 @@
         </div>
     </div>
 </div>
+<div>
 
 
 <!-- ============================================================
@@ -172,52 +207,54 @@
 <!-- ============================================================
      HISTORICAL SENSOR DATA  (AJAX-driven)
 ============================================================ -->
-<h3 class="mb-3">
-    <i class="fas fa-chart-line me-2 text-primary"></i>
-    Sensor Data
-</h3>
-
-<div id="no-sensor-data" class="alert alert-info" style="display:none;">
-    <i class="fas fa-info-circle me-2"></i>
-    No sensor data available for the selected time range.
-</div>
-
-<div class="row g-4" id="sensor-charts-container">
-    <!-- Charts created by JavaScript -->
-</div>
-
-
-<!-- ============================================================
-     ANALYSIS HISTORY  (AJAX-driven, all rows in DOM, ~8 visible)
-============================================================ -->
-<h3 class="mt-5 mb-3">
-    <i class="fas fa-history me-2 text-primary"></i>
-    Analysis History
-</h3>
-
-<div
-    class="table-responsive"
-    style="height: 400px; overflow-y: auto; border-radius: 12px;"
->
-    <table class="table table-hover align-middle mb-0" id="analysis-table">
-
-        <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
-            <tr>
-                <th>Timestamp</th>
-                <th>Status</th>
-                <th>Mine</th>
-            </tr>
-        </thead>
-
-        <tbody id="analysis-tbody">
-            <tr>
-                <td colspan="3" class="text-center text-muted py-4">
-                    Loading…
-                </td>
-            </tr>
-        </tbody>
-
-    </table>
+<div class="card_node" style="padding:20px;border-radius:20px;">
+	<h3 class="mb-3">
+	    <i class="fas fa-chart-line me-2 text-primary"></i>
+	    Sensor Data
+	</h3>
+	
+	<div id="no-sensor-data" class="alert alert-info" style="display:none;">
+	    <i class="fas fa-info-circle me-2"></i>
+	    No sensor data available for the selected time range.
+	</div>
+	
+	<div class="row g-4" id="sensor-charts-container">
+	    <!-- Charts created by JavaScript -->
+	</div>
+	
+	
+	<!-- ============================================================
+	     ANALYSIS HISTORY  (AJAX-driven, all rows in DOM, ~8 visible)
+	============================================================ -->
+	<h3 class="mt-5 mb-3">
+	    <i class="fas fa-history me-2 text-primary"></i>
+	    Analysis History
+	</h3>
+	
+	<div
+	    class="table-responsive"
+	    style="height: 400px; overflow-y: auto; border-radius: 12px;"
+	>
+	    <table class="table table-hover align-middle mb-0" id="analysis-table">
+	
+	        <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+	            <tr>
+	                <th>Timestamp</th>
+	                <th>Status</th>
+	                <th>Mine</th>
+	            </tr>
+	        </thead>
+	
+	        <tbody id="analysis-tbody">
+	            <tr>
+	                <td colspan="3" class="text-center text-muted py-4">
+	                    Loading…
+	                </td>
+	            </tr>
+	        </tbody>
+	
+	    </table>
+	</div>
 </div>
 <br><br>
 
