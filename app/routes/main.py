@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort,jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models import Mine, Node, SensorData, AnalysisLog, Alert, User
@@ -94,13 +94,7 @@ def send_alert():
                             node_id=node.id
             )
             # NEW:
-            try:
-                from app.notifications import send_danger_alert
-                send_danger_alert(current_app._get_current_object(),
-                                    node,
-                                    f"MANUAL by {current_user.username}: {message}")
-            except Exception as mail_exc:
-                print(f"[MAIL] manual alert failed: {mail_exc}")
+            
         elif target_type == 'mine':
             mine_id = request.form.get('mine_id')
             if not mine_id:
@@ -120,19 +114,7 @@ def send_alert():
                             message=message, is_automatic=False,
                             mine_id=mine.id)
             # NEW: notify once for the mine
-            try:
-                from app.notifications import send_danger_alert
-                from flask import current_app
-                # Any node from the mine — we just need one for recipient lookup
-                any_node = mine.nodes[0] if mine.nodes else None
-                if any_node:
-                    send_danger_alert(
-                        current_app._get_current_object(),
-                        any_node,
-                        f"MANUAL by {current_user.username} (whole mine): {message}"
-                    )
-            except Exception as mail_exc:
-                print(f"[MAIL] manual mine alert failed: {mail_exc}")
+            
         else:
             flash('Invalid target type', 'danger')
             return redirect(url_for('main.send_alert'))
