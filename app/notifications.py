@@ -345,3 +345,75 @@ def send_all_reports(app):
             send_mine_report(app, mid)
         except Exception as e:
             print(f"[MAIL] Report failed for mine {mid}: {e}")
+
+def send_reports_for_mines(app, mine_ids, recipient_emails, hours=None):
+    """
+    Send one report per mine in `mine_ids` to the explicit list
+    `recipient_emails`. Used by the admin "Send Report" page.
+
+    Unlike send_all_reports(), this does NOT resolve recipients from
+    the DB — the caller passes the exact list they want.
+    """
+    from app.models import Mine, Alert
+
+    if not app.config.get('NOTIFY_ENABLED', True):
+        print("[MAIL] Skipped — NOTIFY_ENABLED=false")
+        return
+
+    if not mine_ids:
+        print("[MAIL] No mines selected.")
+        return
+
+    if not recipient_emails:
+        print("[MAIL] No recipients selected.")
+        return
+
+    hours = hours or app.config.get('REPORT_INTERVAL_HOURS', 8)
+
+    for mid in mine_ids:
+        try:
+            mine = Mine.query.get(mid)
+            if mine is None:
+                print(f"[MAIL] Mine {mid} not found — skipping.")
+                continue
+
+            end   = datetime.utcnow()
+            start = end - timedelta(hours=hours)
+
+            nodes = list(mine.nodes)
+            nodes_total     = len(nodes)
+            normal_count    = sum(1 for n in nodes if n.current_status == 'normal')
+            attention_count = sum(1 for n in nodes if n.current_status == 'attention')
+            danger_count    = sum(1 for n in nodes if n.current_status == 'danger')
+
+            alerts = (Alert.query
+                      .filter(Alert.mine_id == mine.id,
+                              Alert.timestamp >= start,
+                              Alert.timestamp <= end)
+                      .order_by(Alert.timestamp.desc())
+                      .limit(30)
+                      .all())
+
+            html = render_template_string(
+                REPORT_HTML,
+                hours=hours,
+                start=start,
+                end=end,
+                mine=mine,
+                nodes_total=nodes_total,
+                normal_count=normal_count,
+                attention_count=attention_count,
+                danger_count=danger_count,
+                alerts=alerts,
+            )
+
+            subject = (f"[Bhu-Rakshak] {hours}-hr report — {mine.name} "
+                       f"({danger_count} danger)")
+
+            _dispatch_async(app, recipient_emails, subject, html)
+
+        except Exception as e:
+            print(f"[MAIL] Report failed for mine {mid}: {e}")
+
+    print(f"[MAIL] Manual report run queued — "
+          f"{len(mine_ids)} mine(s), {len(recipient_emails)} recipient(s).")
