@@ -21,7 +21,7 @@
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('/static/img/background_5.jpg');
+    
     background-size: cover;
     background-position: center;
     
@@ -41,11 +41,9 @@
 	    <a href="{{ url_for('admin.list_links') }}" class="btn btn-outline-primary btn-sm">
 	        <i class="fas fa-list"></i> View All Links
 	    </a>
-	    <form action="{{ url_for('admin.send_reports_now') }}" method="post" class="d-inline">
-	        <button type="submit" class="btn btn-outline-danger btn-sm">
-	            <i class="fas fa-paper-plane"></i> Send Report Now
-	        </button>
-	    </form>
+	     <a href="{{ url_for('admin.send_report_page') }}" class="btn btn-outline-primary btn-sm">
+	        <i class="fas fa-paper-plane"></i> Send Report
+	    </a>
 	</div>
 	<!-- tabs -->
 	<ul class="nav nav-tabs" id="officeTabs" role="tablist">
@@ -88,6 +86,7 @@
                         <th>ID</th>
                         <th>Staffname</th>
                         <th>Email</th>
+                        <th>Phone</th>
                         <th>Role</th>
                         <th>Blacklisted</th>
                         <th>Assigned Mines</th>
@@ -101,6 +100,7 @@
                         <td>{{ user.id }}</td>
                         <td>{{ user.username }}</td>
                         <td>{{ user.email }}</td>
+                        <td>{{user.phone}}</td>
                         <td><span class="badge bg-secondary">{{ user.role }}</span></td>
                         <td>
                             {% if user.is_blacklisted %}
@@ -182,9 +182,18 @@
                             {% endfor %}
                         </td>
                         <td>
-                            <a href="{{ url_for('admin.edit_mine', mine_id=mine.id) }}" class="btn btn-sm btn-warning">
+                            <a href="{{ url_for('admin.edit_mine', mine_id=mine.id) }}"
+                               class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            <form action="{{ url_for('admin.delete_mine', mine_id=mine.id) }}"
+                                  method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete mine &quot;{{ mine.name }}&quot;?\n\nThis will also delete all its analysis logs and alerts. Nodes will be detached but not deleted.');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete this mine">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -230,9 +239,18 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ url_for('admin.edit_node', node_id=node.id) }}" class="btn btn-sm btn-warning">
+                            <a href="{{ url_for('admin.edit_node', node_id=node.id) }}"
+                               class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            <form action="{{ url_for('admin.delete_node', node_id=node.id) }}"
+                                  method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete node &quot;{{ node.name }}&quot;?\n\nThis will also delete all its sensor data, analysis history, and links to other nodes.');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete this node">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
