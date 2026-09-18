@@ -717,40 +717,55 @@
         }
 
         /* =====================================================
-           ALERTS — pastel glass
+           ALERTS — solid enough to read over any background
         ===================================================== */
-
+        
         .alert {
-            border-radius: 20px;
-            border: 1px;
-            
-            
+            border-radius: 14px;
+            border: 1px solid transparent;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            font-weight: 500;
+            box-shadow: 0 6px 22px rgba(30, 60, 120, 0.10);
         }
-
+        
         .alert-success {
-            background: rgba(16, 185, 129, 0.10);
-            border-color: rgba(16, 185, 129, 0.25);
-            color: #065f46;
+            background: rgba(209, 250, 229, 0.95);      /* soft mint, near-opaque */
+            border-color: rgba(16, 185, 129, 0.55);
+            color: #064e3b;                              /* dark green text */
         }
-
+        
         .alert-danger {
-            background: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.25);
-            color: #991b1b;
+            background: rgba(254, 226, 226, 0.95);      /* soft rose */
+            border-color: rgba(220, 38, 38, 0.55);
+            color: #7f1d1d;
         }
-
+        
         .alert-warning {
-            background: rgba(245, 158, 11, 0.12);
-            border-color: rgba(245, 158, 11, 0.30);
-            color: #92400e;
+            background: rgba(254, 243, 199, 0.95);      /* soft amber */
+            border-color: rgba(217, 119, 6, 0.55);
+            color: #78350f;
         }
-
+        
         .alert-info {
-            background: rgba(14, 165, 233, 0.10);
-            border-color: rgba(14, 165, 233, 0.28);
+            background: rgba(224, 242, 254, 0.95);      /* soft sky */
+            border-color: rgba(2, 132, 199, 0.55);
             color: #0c4a6e;
         }
-
+        
+        /* Make the icon slightly bolder so it stands out */
+        .alert i {
+            font-weight: 600;
+        }
+        
+        /* Close button visibility */
+        .alert .btn-close {
+            opacity: 0.65;
+        }
+        
+        .alert .btn-close:hover {
+            opacity: 1;
+        }
         /* =====================================================
            BADGES
         ===================================================== */
