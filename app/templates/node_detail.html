@@ -8,31 +8,45 @@
 .card_node {
     position: relative;
     border-radius: 20px;
-    overflow: hidden; /* Crucial: clips the pseudo-element to the rounded corners */
-    
-    /* Keep the glass effects on the main element */
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+
+    /* Solid white glass — readable text guaranteed */
+    background: rgba(255, 255, 255, 0.78);
+
+    border: 1px solid rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
-    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
     color: var(--ink);
     z-index: 1;
-    padding:20px;
-    border-radius:20px;
+    padding: 20px;
 }
 
-/* The image lives on a pseudo-element behind the glass */
+/* Optional faint image behind the glass — kept very subtle */
 .card_node::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('/static/img/background_6.jpg');
+
+    background-image: url('/static/img/node_map_3.jpg');
     background-size: cover;
     background-position: center;
-    
-    /* Lower the opacity so the card still looks somewhat transparent/glassy */
-    opacity: 0.2; 
-    z-index: -1; /* Pushes it behind the card's content and borders */
+
+    opacity: 0.06;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Make sure all text inside .card_node sits above the pseudo-element */
+.card_node > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Force readable text for muted paragraphs inside the card */
+.card_node .text-muted {
+    color: #64748b !important;
 }
 </style>
 
@@ -41,7 +55,7 @@
 ============================================================ -->
 <div class="card_node">
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>
+    <h1 class="text-dark">
         <i class="fas fa-microchip me-2 text-primary"></i>
         {{ node.name }}
     </h1>
@@ -69,7 +83,9 @@
 <div class="card_node mb-4">
     <div class="card-body">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <strong class="me-2"><i class="fas fa-filter me-1 text-primary"></i>Time range:</strong>
+        <small class="text-muted me-2">
+            <i class="fas fa-clock me-1"></i>Auto-refresh:
+        </small>
 
             <div class="btn-group btn-group-sm flex-wrap" role="group" id="range-buttons">
                 <button type="button" class="btn btn-outline-primary" data-range="5m">Last 5 min</button>
