@@ -48,14 +48,14 @@ def create_app(config_class=Config):
         if admin is None:
             admin = User(
                 username='admin',
-                email='sohamdip_santra@yahoo.com',
+                email='coal_mime_india@yahoo.com',
                 role='admin',
                 is_blacklisted=False,
             )
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Default admin created: email='admin@mine.com', username='admin', password='admin123'")
+            #print("✅ Default admin created: email='admin@mine.com', username='admin', password='admin123'")
         else:
             if admin.is_blacklisted:
                 admin.is_blacklisted = False
@@ -77,7 +77,7 @@ def create_app(config_class=Config):
             print(f"[ML-BG] Failed to start: {e}")
 
         # Serial bridge (safe to fail if no ESP32 connected)
-        try:
+        '''        try:
             from app.serial_bridge import start_serial_bridge
             start_serial_bridge(app)
         except Exception as e:
@@ -89,5 +89,5 @@ def create_app(config_class=Config):
             start_scheduler(app)
         except Exception as e:
             print(f"[SCHED] Failed to start: {e}")
-
+        '''
     return app
