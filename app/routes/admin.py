@@ -34,12 +34,13 @@ def create_user():
         email = request.form.get('email')
         password = request.form.get('password')
         role = request.form.get('role')
+        phone=request.form.get('phone')
 
         if role not in ['engineer', 'supervisor']:
             flash('Invalid role', 'danger')
             return redirect(url_for('admin.create_user'))
 
-        user = User(username=username, email=email, role=role)
+        user = User(username=username, email=email, role=role,phone=phone)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
@@ -415,12 +416,167 @@ def delete_link(from_id, to_id):
     flash('Link deleted.', 'success')
     return redirect(url_for('admin.list_links'))
 
-@admin_bp.route('/reports/send-now', methods=['POST'])
+
+# =========================================================
+# SEND REPORT — manual, admin chooses mines + recipients
+# =========================================================
+
+@admin_bp.route('/reports/send', methods=['GET'])
 @login_required
 @role_required('admin')
-def send_reports_now():
+def send_report_page():
+    """Show the form for picking mines and recipients."""
+    from app.models import User
+
+    mines = Mine.query.order_by(Mine.id.asc()).all()
+
+    # Recipients = every non-blacklisted staff member (incl. admins)
+    staff = (User.query
+             .filter(User.is_blacklisted == False)   # noqa: E712
+             .order_by(User.role.asc(), User.username.asc())
+             .all())
+
+    return render_template('send_report.html', mines=mines, staff=staff)
+
+
+@admin_bp.route('/reports/send', methods=['POST'])
+@login_required
+@role_required('admin')
+def send_report_submit():
+    """Process the report form and dispatch emails."""
     from flask import current_app
-    from app.notifications import send_all_reports
-    send_all_reports(current_app._get_current_object())
-    flash('Report run triggered — check your inbox.', 'info')
+    from app.models import User
+    from app.notifications import send_reports_for_mines
+
+    # ---- Mines ----
+    if request.form.get('all_mines') == '1':
+        mine_ids = [m.id for m in Mine.query.all()]
+    else:
+        mine_ids = request.form.getlist('mine_ids', type=int)
+
+    if not mine_ids:
+        flash('Please select at least one mine.', 'warning')
+        return redirect(url_for('admin.send_report_page'))
+
+    # ---- Recipients ----
+    if request.form.get('all_staff') == '1':
+        recipient_users = User.query.filter(
+            User.is_blacklisted == False    # noqa: E712
+        ).all()
+    else:
+        user_ids = request.form.getlist('user_ids', type=int)
+        recipient_users = User.query.filter(User.id.in_(user_ids)).all() if user_ids else []
+
+    recipient_emails = sorted({u.email.strip() for u in recipient_users if u.email})
+
+    if not recipient_emails:
+        flash('Please select at least one recipient.', 'warning')
+        return redirect(url_for('admin.send_report_page'))
+
+    # ---- Fire ----
+    hours = request.form.get('hours', type=int) or \
+            current_app.config.get('REPORT_INTERVAL_HOURS', 8)
+
+    send_reports_for_mines(
+        current_app._get_current_object(),
+        mine_ids,
+        recipient_emails,
+        hours=hours,
+    )
+
+    flash(
+        f'Report queued for {len(mine_ids)} mine(s) → '
+        f'{len(recipient_emails)} recipient(s).',
+        'success',
+    )
+    return redirect(url_for('admin.office'))
+
+
+# =========================================================
+# DELETE — Node
+# =========================================================
+
+@admin_bp.route('/nodes/<int:node_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_node(node_id):
+    """
+    Delete a node and all its associated data:
+      - SensorData rows
+      - AnalysisLog rows
+      - Alert rows
+      - Node links (edges) in both directions
+      - Mine associations
+    """
+    from app.models import SensorData, AnalysisLog, Alert
+
+    node = Node.query.get_or_404(node_id)
+    node_name = node.name
+
+    # 1. Delete sensor readings
+    SensorData.query.filter_by(node_id=node.id).delete()
+
+    # 2. Delete analysis logs
+    AnalysisLog.query.filter_by(node_id=node.id).delete()
+
+    # 3. Delete alerts targeting this node (or triggered for it)
+    Alert.query.filter_by(node_id=node.id).delete()
+
+    # 4. Delete links where this node is either end
+    db.session.execute(
+        node_links.delete().where(
+            (node_links.c.from_node_id == node.id) |
+            (node_links.c.to_node_id == node.id)
+        )
+    )
+
+    # 5. Clear mine associations (removes rows from mine_nodes)
+    for m in list(node.mines):
+        node.mines.remove(m)
+
+    # 6. Delete the node itself
+    db.session.delete(node)
+    db.session.commit()
+
+    flash(f'Node "{node_name}" deleted.', 'success')
+    return redirect(url_for('admin.office'))
+
+
+# =========================================================
+# DELETE — Mine
+# =========================================================
+
+@admin_bp.route('/mines/<int:mine_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_mine(mine_id):
+    """
+    Delete a mine and all its associated data.
+    Nodes are NOT deleted — they're just detached from this mine
+    (they may belong to other mines too).
+    """
+    from app.models import AnalysisLog, Alert
+
+    mine = Mine.query.get_or_404(mine_id)
+    mine_name = mine.name
+
+    # 1. Delete analysis logs
+    AnalysisLog.query.filter_by(mine_id=mine.id).delete()
+
+    # 2. Delete alerts belonging to this mine
+    Alert.query.filter_by(mine_id=mine.id).delete()
+
+    # 3. Clear user assignments (removes rows from user_mines)
+    for u in list(mine.users):
+        u.mines.remove(mine)
+
+    # 4. Clear node associations (removes rows from mine_nodes)
+    for n in list(mine.nodes):
+        n.mines.remove(mine)
+
+    # 5. Delete the mine itself
+    db.session.delete(mine)
+    db.session.commit()
+
+    flash(f'Mine "{mine_name}" deleted.', 'success')
     return redirect(url_for('admin.office'))
