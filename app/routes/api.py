@@ -78,16 +78,7 @@ def receive_analysis():
                               message=f'Automatic danger alert for node {node.name}',
                               is_automatic=True, mine_id=mine_id, node_id=node_id)
                 db.session.add(alert)
-                try:
-                    from app.notifications import send_danger_alert
-                    from flask import current_app
-                    send_danger_alert(
-                        current_app._get_current_object(),
-                        node,
-                        f"AUTO: {node.name} flagged danger by /api/analysis"
-                    )
-                except Exception as mail_exc:
-                    print(f"[MAIL] api.py danger alert failed: {mail_exc}")
+                
     db.session.commit()
     return jsonify({'success': True, 'processed': len(data)})
 
