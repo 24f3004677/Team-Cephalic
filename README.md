@@ -378,7 +378,6 @@ All rights are reserved under the name of Cephalic and its contributers.
 - **TensorFlow & XGBoost communities** — for excellent open-source ML tools
 
 ---
-
 <div align="center">
 
 **Built with ❤️ for miner safety**
@@ -386,6 +385,5 @@ All rights are reserved under the name of Cephalic and its contributers.
 *"Every sensor we deploy is a life we might save."*
 
 </div>
-
 
 ---
