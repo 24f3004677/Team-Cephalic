@@ -33,7 +33,7 @@ _bg_thread = None
 _stop_flag = threading.Event()
 
 # Config
-TICK_INTERVAL_SECONDS = 2
+TICK_INTERVAL_SECONDS = 5
 USE_DB_SENSORS        = True
 SIMULATE_IF_EMPTY     = True       # set False in production
 ALERT_COOLDOWN_SECS   = 60

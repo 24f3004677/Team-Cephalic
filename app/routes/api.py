@@ -8,6 +8,9 @@ import io
 api_bp = Blueprint('api', __name__)
 
 # Endpoint to receive raw sensor data from ESP32
+from app import csrf
+
+@csrf.exempt
 @api_bp.route('/sensor-data', methods=['POST'])
 def receive_sensor_data():
     data = request.get_json()
@@ -207,7 +210,7 @@ def get_node_sensor_data(node_id):
     grouped = {}
     for r in rows:
         grouped.setdefault(r.sensor_type, []).append({
-            'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'timestamp':  r.timestamp.isoformat(timespec='seconds') + 'Z',   # explicit UTC marker,
             'value': r.value,
         })
 
@@ -288,7 +291,7 @@ def get_node_analysis(node_id):
         'range':   request.args.get('range', '1h'),
         'count':   len(rows),
         'analysis': [{
-            'timestamp':   r.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'timestamp':   r.timestamp.isoformat(timespec='seconds') + 'Z',
             'status':      r.status,
             'status_text': status_text.get(r.status, 'Unknown'),
             'mine':        r.mine.name if r.mine else 'N/A',

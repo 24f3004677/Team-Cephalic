@@ -8,6 +8,7 @@
             </div>
             <div class="card-body">
                 <form method="POST">
+                	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="from_node_id" class="form-label">From Node <span class="text-danger">*</span></label>
                         <select name="from_node_id" class="form-select" required>

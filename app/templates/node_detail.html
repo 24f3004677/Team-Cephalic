@@ -207,6 +207,8 @@
 
                 <p class="display-6">
                     {% if node.created_at %}
+                   	<span class="local-time"
+                                                  data-utc="{{ node.created_at.isoformat(timespec='seconds') }}Z">
                         {{ node.created_at.strftime('%Y-%m-%d %H:%M') }}
                     {% else %}
                         N/A
@@ -717,6 +719,134 @@
      FILTER + AJAX SENSOR DATA + AJAX ANALYSIS
 ============================================================ -->
 <script>
+/* ============================================================
+   TIMEZONE HELPERS
+   Database stores naive UTC. Display everything in IST.
+============================================================ */
+
+const DISPLAY_TIMEZONE = "Asia/Kolkata";
+
+
+function parseDatabaseUTC(value) {
+
+    if (!value) {
+        return null;
+    }
+
+    let text = String(value).trim();
+
+    // Normalise space separator to ISO 'T'
+    text = text.replace(" ", "T");
+
+    // Strip microseconds — 6 decimal places break some browsers
+    text = text.replace(/(\.\d{3})\d+/, "$1");
+
+    // If no timezone info, assume UTC
+    const hasTimezone =
+        text.endsWith("Z") || /[+-]\d\d:?\d\d$/.test(text);
+
+    if (!hasTimezone) {
+        text += "Z";
+    }
+
+    const date = new Date(text);
+
+    if (Number.isNaN(date.getTime())) {
+        console.warn("[time] could not parse:", value, "→", text);
+        return null;
+    }
+
+    return date;
+}
+
+
+/*
+ * Format as: DD/MM/YYYY, HH:MM:SS IST
+ * Uses Intl with an explicit timeZone so it always renders IST
+ * no matter where the browser is.
+ */
+function formatLocal(value) {
+
+    const date = parseDatabaseUTC(value);
+
+    if (!date) {
+        return "N/A";
+    }
+
+    // Build the date parts using IST
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: DISPLAY_TIMEZONE,
+        year:   "numeric",
+        month:  "2-digit",
+        day:    "2-digit",
+        hour:   "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+    }).formatToParts(date);
+
+    // Extract each piece
+    const get = (type) => parts.find(p => p.type === type)?.value || "";
+
+    const day   = get("day");
+    const month = get("month");
+    const year  = get("year");
+    const hour  = get("hour") === "24" ? "00" : get("hour");   // 24:00 edge case
+    const min   = get("minute");
+    const sec   = get("second");
+
+    return `${day}/${month}/${year}, ${hour}:${min}:${sec} IST`;
+}
+
+
+/*
+ * Chart X-axis labels — time only, still IST.
+ * Format: HH:MM:SS
+ */
+function formatChartTime(value) {
+
+    const date = parseDatabaseUTC(value);
+
+    if (!date) {
+        return "";
+    }
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: DISPLAY_TIMEZONE,
+        hour:   "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+    }).formatToParts(date);
+
+    const get = (type) => parts.find(p => p.type === type)?.value || "";
+
+    const hour = get("hour") === "24" ? "00" : get("hour");
+    const min  = get("minute");
+    const sec  = get("second");
+
+    return `${hour}:${min}:${sec}`;
+}
+
+
+/* ============================================================
+   Convert any server-rendered .local-time element on load.
+============================================================ */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".local-time").forEach(function (el) {
+
+        const utc = el.dataset.utc;
+
+        if (utc) {
+            el.textContent = formatLocal(utc);
+        }
+
+    });
+
+});
+
 (function () {
     "use strict";
 

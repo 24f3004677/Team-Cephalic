@@ -123,13 +123,15 @@
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             <form action="{{ url_for('admin.blacklist_user', user_id=user.id) }}" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm {% if user.is_blacklisted %}btn-success{% else %}btn-warning{% endif %}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm {% if user.is_blacklisted %}btn-success{% else %}btn-warning{% endif %}">
                                     {% if user.is_blacklisted %}<i class="fas fa-check"></i> Unblacklist{% else %}<i class="fas fa-ban"></i> Blacklist{% endif %}
                                 </button>
                             </form>
                             {% if user.role != 'admin' %}
                             <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }}?')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -190,7 +192,8 @@
                                   method="post"
                                   class="d-inline"
                                   onsubmit="return confirm('Delete mine &quot;{{ mine.name }}&quot;?\n\nThis will also delete all its analysis logs and alerts. Nodes will be detached but not deleted.');">
-                                <button type="submit" class="btn btn-sm btn-danger" title="Delete this mine">
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                  <button type="submit" class="btn btn-sm btn-danger" title="Delete this mine">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -247,6 +250,7 @@
                                   method="post"
                                   class="d-inline"
                                   onsubmit="return confirm('Delete node &quot;{{ node.name }}&quot;?\n\nThis will also delete all its sensor data, analysis history, and links to other nodes.');">
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger" title="Delete this node">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -264,6 +268,7 @@
         <h3 class="mt-3"><i class="fas fa-user-plus me-2 text-secondary"></i>Assign Engineer/Supervisor to Mine</h3>
         <div class="card p-4 mb-4">
             <form method="POST" action="{{ url_for('admin.assign_user_to_mine') }}">
+            	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label for="user_id" class="form-label">Staff</label>

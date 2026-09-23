@@ -13,7 +13,7 @@ All errors are caught and logged — never raised into the ML loop.
 import threading
 import time
 from datetime import datetime, timedelta
-
+from app.models import User
 from flask_mail import Mail, Message
 from flask import render_template_string
 
@@ -183,29 +183,29 @@ def _resolve_recipients(mine_id=None):
 def _send_thread(app, recipients, subject, html_body):
     """Actual SMTP send — runs on a daemon thread with its own app context."""
     with app.app_context():
-        # Yahoo requires From == authenticated user, so we hard-set it here.
-        sender = (
-            app.config.get('MAIL_USERNAME')
-            or app.config.get('MAIL_DEFAULT_SENDER')
-            or 'coal_mine_india@yahoo.com'
-        )
+
+        sender = app.config.get('MAIL_USERNAME')
+
+        if not sender:
+            print("[MAIL] ERROR: MAIL_USERNAME is not set. "
+                  "Add it to .env or the environment. Email NOT sent.")
+            return
 
         try:
             msg = Message(
                 subject=subject,
                 recipients=recipients,
                 html=html_body,
-                sender=sender,          # <-- explicit, guaranteed correct
+                sender=sender,
             )
             mail.send(msg)
             print(f"[MAIL] Sent '{subject}' → {len(recipients)} recipient(s) as {sender}")
         except Exception as e:
             print(f"[MAIL] Failed to send '{subject}': {e}")
-            # Extra debug — show what config Flask-Mail actually saw
             print(f"[MAIL] Debug: MAIL_SERVER={app.config.get('MAIL_SERVER')}")
             print(f"[MAIL] Debug: MAIL_PORT={app.config.get('MAIL_PORT')}")
             print(f"[MAIL] Debug: MAIL_USE_TLS={app.config.get('MAIL_USE_TLS')}")
-            print(f"[MAIL] Debug: MAIL_USERNAME={app.config.get('MAIL_USERNAME')}")
+            print(f"[MAIL] Debug: MAIL_USERNAME={sender}")
             print(f"[MAIL] Debug: PASSWORD SET={'yes' if app.config.get('MAIL_PASSWORD') else 'NO'}")
 
 

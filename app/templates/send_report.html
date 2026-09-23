@@ -40,6 +40,7 @@
 <h1><i class="fas fa-paper-plane me-2 text-primary"></i>Send Report</h1>
 
 <form method="POST" action="{{ url_for('admin.send_report_submit') }}">
+	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <!-- ============================================================ -->
     <!-- MINES                                                        -->

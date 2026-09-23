@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_login import LoginManager
 from config import Config
+from app.extensions import csrf, limiter
 import os
 
 from app.models import db
@@ -16,6 +17,9 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     login_manager.init_app(app)
+    
+    csrf.init_app(app)
+    limiter.init_app(app)
 
     # Import models so they register on db
     from app.models import User, Mine, Node, SensorData, AnalysisLog, Alert
@@ -48,7 +52,7 @@ def create_app(config_class=Config):
         if admin is None:
             admin = User(
                 username='admin',
-                email='coal_mime_india@yahoo.com',
+                email='coal_mine_india@yahoo.com',
                 role='admin',
                 is_blacklisted=False,
             )
@@ -90,4 +94,12 @@ def create_app(config_class=Config):
         except Exception as e:
             print(f"[SCHED] Failed to start: {e}")
         '''
+        # app/__init__.py
+    from flask_wtf.csrf import CSRFError
+    
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        flash("Your session expired or the form was tampered with. Please try again.", "danger")
+        return redirect(url_for('auth.login'))
+    
     return app

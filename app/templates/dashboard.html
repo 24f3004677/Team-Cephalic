@@ -11,6 +11,11 @@
   border-radius: 20px;
 	}
 
+	.card-body.status-warning {
+  background-image: linear-gradient(321deg, rgba(234, 250, 5, 1) 1%, rgba(255, 255, 255, 1) 45%, rgba(255, 255, 255, 1) 100%);
+  border-radius: 20px;
+	}
+
 	.title-glass {
     display: inline-flex;
     align-items: center;
@@ -113,7 +118,7 @@
 		    {% for mine in mines %}
 		    <div class="col-md-4">
 		        <div class="card h-100 border-left-4 {% if mine.current_status == 'danger' %}border-danger border-3{% elif mine.current_status == 'attention' %}border-warning border-3{% else %}border-success border-3{% endif %}">
-		            <div class="card-body {% if mine.current_status == 'normal' %}status-normal{% elif mine.current_status == 'danger' %}status-danger{% endif %}" style="border-radius: 20px;">
+		            <div class="card-body {% if mine.current_status == 'normal' %}status-normal{% elif mine.current_status == 'danger' %}status-danger{% elif mine.current_status == 'attention' %}status-warning{% endif %}" style="border-radius: 20px;">
 		                <div class="d-flex justify-content-between align-items-start">
 		                    <h5 class="card-title text-primary">{{ mine.name }}</h5>
 		                    <span class="badge {% if mine.current_status == 'danger' %}bg-danger{% elif mine.current_status == 'attention' %}bg-warning text-dark{% else %}bg-success{% endif %}">

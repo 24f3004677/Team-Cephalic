@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
-load_dotenv()   # reads .env into os.environ
+load_dotenv(override=True)   # reads .env into os.environ
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') 
@@ -41,4 +42,10 @@ class Config:
 
     # Don't spam the same node's alert more than once per N seconds
     ALERT_EMAIL_COOLDOWN_SECS = int(os.environ.get('ALERT_EMAIL_COOLDOWN_SECS', '300'))
+
+    SESSION_COOKIE_SECURE     = os.environ.get('FLASK_ENV') == 'production'
+    SESSION_COOKIE_HTTPONLY   = True
+    SESSION_COOKIE_SAMESITE   = 'Lax'
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=4)
+    REMEMBER_COOKIE_SECURE    = os.environ.get('FLASK_ENV') == 'production'
 

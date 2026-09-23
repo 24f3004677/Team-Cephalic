@@ -189,10 +189,11 @@
             </div>
 
             <form class="form" method="POST" action="{{ url_for('auth.login') }}">
-                <div class="form-group">
-                    <label for="email">EMPLOYEE ID / EMAIL</label>
-                    <input type="text" id="email" name="email" placeholder="Enter your employee ID or email" autocomplete="username" required>
-                </div>
+            	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+	                <div class="form-group">
+	                    <label for="email">EMPLOYEE ID / EMAIL</label>
+	                    <input type="text" id="email" name="email" placeholder="Enter your employee ID or email" autocomplete="username" required>
+	                </div>
                 <div class="form-group">
                     <label for="password">PASSWORD</label>
                     <div class="password-box">
