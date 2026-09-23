@@ -5,6 +5,7 @@ from app.models import Mine, Node, Alert, SensorData, AnalysisLog
 from app.utils.decorators import role_required
 from datetime import datetime
 from app.models import node_links
+from app.utils.audit import log_audit
 
 
 def has_mine_access(user, mine_id):
@@ -39,6 +40,7 @@ def create_node():
             if mine and mine in current_user.mines:
                 node.mines.append(mine)
         db.session.add(node)
+        log_audit('CREATE', 'node', node.id, f'Staff created node {node.name}')
         db.session.commit()
         flash('Node created', 'success')
         return redirect(url_for('main.dashboard'))

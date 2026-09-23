@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Mine, Node, SensorData, AnalysisLog, Alert, User
 from app.utils.decorators import role_required
+from app.utils.audit import log_audit
+
 
 main_bp = Blueprint('main', __name__)
 
@@ -50,7 +52,7 @@ def node_detail(node_id):
             'timestamp': s.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             'value': s.value
         })
-    analysis_history = node.analysis_logs.order_by(AnalysisLog.timestamp.desc()).limit(20).all()
+    analysis_history = AnalysisLog.query.filter_by(node_id=node.id).order_by(AnalysisLog.timestamp.desc()).limit(20).all()
     return render_template('node_detail.html', node=node, sensor_data=sensor_data,
                            analysis_history=analysis_history)
 
@@ -120,6 +122,12 @@ def send_alert():
             return redirect(url_for('main.send_alert'))
 
         db.session.add(alert)
+        log_audit(
+            action='ALERT', 
+            target_type=target_type, 
+            target_id=alert.target_id, 
+            details=f'Manual {target_type} alert sent: {message}'
+        )
         db.session.commit()
         flash('Alert sent', 'success')
         return redirect(url_for('main.dashboard'))
@@ -150,6 +158,12 @@ def mark_node_fixed(node_id):
     for mine in node.mines:
         mine.update_status_from_nodes()
         db.session.add(mine)
+        log_audit(
+            action='FIX', 
+            target_type='node', 
+            target_id=node.id, 
+            details=f'Manually marked node {node.name} as fixed for 5 minutes'
+        )
     db.session.commit()
     flash(f'Node {node.name} marked as fixed', 'success')
 

@@ -3,13 +3,28 @@ from flask_login import LoginManager
 from config import Config
 from app.extensions import csrf, limiter
 import os
-
+import logging
+from logging.handlers import RotatingFileHandler
 from app.models import db
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
+# app/__init__.py, inside create_app() before db.create_all()
+
+
+def _configure_logging(app):
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    handler = RotatingFileHandler('logs/bhu_rakshak.log',
+                                  maxBytes=5_000_000, backupCount=10)
+    handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s [%(module)s:%(lineno)d] %(message)s'
+    ))
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -64,7 +79,7 @@ def create_app(config_class=Config):
             if admin.is_blacklisted:
                 admin.is_blacklisted = False
                 db.session.commit()
-                print("⚠️  Admin was blacklisted — un-blacklisted.")
+                app.logger.info("⚠️  Admin was blacklisted — un-blacklisted.")
 
     # ---------------- Init Flask-Mail ----------------
     from app.notifications import mail
@@ -78,7 +93,7 @@ def create_app(config_class=Config):
             from app.ml_engine import start_background_engine
             start_background_engine(app)
         except Exception as e:
-            print(f"[ML-BG] Failed to start: {e}")
+            app.logger.info(f"[ML-BG] Failed to start: {e}")
 
         # Serial bridge (safe to fail if no ESP32 connected)
         '''        try:

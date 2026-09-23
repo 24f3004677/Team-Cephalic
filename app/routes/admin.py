@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import User, Mine, Node, node_links
 from app.utils.decorators import role_required
+from app.utils.audit import log_audit
 
 
 admin_bp = Blueprint('admin', __name__)
@@ -43,6 +44,7 @@ def create_user():
         user = User(username=username, email=email, role=role,phone=phone)
         user.set_password(password)
         db.session.add(user)
+        log_audit('CREATE', 'user', user.id, f'Created user {user.username} with role {role}')
         db.session.commit()
         flash(f'User {username} created successfully', 'success')
         return redirect(url_for('admin.office'))
@@ -53,6 +55,7 @@ def create_user():
 def blacklist_user(user_id):
     user = User.query.get_or_404(user_id)
     user.is_blacklisted = not user.is_blacklisted
+    log_audit('UPDATE', 'user', user.id, f'Toggled blacklist for {user.username}')
     db.session.commit()
     status = 'blacklisted' if user.is_blacklisted else 'unblacklisted'
     flash(f'User {user.username} {status}', 'info')
@@ -66,6 +69,7 @@ def delete_user(user_id):
         flash('Cannot delete admin account', 'danger')
         return redirect(url_for('admin.office'))
     db.session.delete(user)
+    log_audit('DELETE', 'user', user_id, f'Deleted user {user.username}')
     db.session.commit()
     flash('User deleted', 'success')
     return redirect(url_for('admin.office'))
@@ -146,6 +150,7 @@ def create_mine():
         mine = Mine(name=name, location=location,
                     workers_count=workers_count, x=x, y=y)
         db.session.add(mine)
+        log_audit('CREATE', 'mine', mine.id, f'Created mine {mine.name}')
         db.session.commit()
         flash(f'Mine "{name}" created.', 'success')
         return redirect(url_for('admin.list_links'))
@@ -166,6 +171,45 @@ def edit_mine(mine_id):
         return redirect(url_for('admin.list_links'))
     return render_template('edit_mine.html', mine=mine)
 
+# =========================================================
+# DELETE — Mine
+# =========================================================
+
+@admin_bp.route('/mines/<int:mine_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_mine(mine_id):
+    """
+    Delete a mine and all its associated data.
+    Nodes are NOT deleted — they're just detached from this mine
+    (they may belong to other mines too).
+    """
+    from app.models import AnalysisLog, Alert
+
+    mine = Mine.query.get_or_404(mine_id)
+    mine_name = mine.name
+
+    # 1. Delete analysis logs
+    AnalysisLog.query.filter_by(mine_id=mine.id).delete()
+
+    # 2. Delete alerts belonging to this mine
+    Alert.query.filter_by(mine_id=mine.id).delete()
+
+    # 3. Clear user assignments (removes rows from user_mines)
+    for u in list(mine.users):
+        u.mines.remove(mine)
+
+    # 4. Clear node associations (removes rows from mine_nodes)
+    for n in list(mine.nodes):
+        n.mines.remove(mine)
+
+    # 5. Delete the mine itself
+    db.session.delete(mine)
+    log_audit('DELETE', 'mine', mine_id, f'Deleted mine {mine_name}')
+    db.session.commit()
+
+    flash(f'Mine "{mine_name}" deleted.', 'success')
+    return redirect(url_for('admin.office'))
 
 @admin_bp.route('/mines/map')
 def mines_map():
@@ -208,6 +252,7 @@ def create_node():
             if mine:
                 node.mines.append(mine)
         db.session.add(node)
+        log_audit('CREATE', 'node', node.id, f'Created node {node.name}')
         db.session.commit()
         flash(f'Node "{name}" created.', 'success')
         return redirect(url_for('admin.list_links'))
@@ -215,6 +260,53 @@ def create_node():
     mines = Mine.query.order_by(Mine.id.asc()).all() \
         if current_user.role == 'admin' else current_user.mines.all()
     return render_template('create_node.html', mines=mines)
+
+
+@admin_bp.route('/nodes/<int:node_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_node(node_id):
+    """
+    Delete a node and all its associated data:
+      - SensorData rows
+      - AnalysisLog rows
+      - Alert rows
+      - Node links (edges) in both directions
+      - Mine associations
+    """
+    from app.models import SensorData, AnalysisLog, Alert
+
+    node = Node.query.get_or_404(node_id)
+    node_name = node.name
+
+    # 1. Delete sensor readings
+    SensorData.query.filter_by(node_id=node.id).delete()
+
+    # 2. Delete analysis logs
+    AnalysisLog.query.filter_by(node_id=node.id).delete()
+
+    # 3. Delete alerts targeting this node (or triggered for it)
+    Alert.query.filter_by(node_id=node.id).delete()
+
+    # 4. Delete links where this node is either end
+    db.session.execute(
+        node_links.delete().where(
+            (node_links.c.from_node_id == node.id) |
+            (node_links.c.to_node_id == node.id)
+        )
+    )
+
+    # 5. Clear mine associations (removes rows from mine_nodes)
+    for m in list(node.mines):
+        node.mines.remove(m)
+
+    # 6. Delete the node itself
+    db.session.delete(node)
+    log_audit('DELETE', 'node', node_id, f'Deleted node {node_name} and all associated data')
+    db.session.commit()
+
+    flash(f'Node "{node_name}" deleted.', 'success')
+    return redirect(url_for('admin.office'))
 
 
 @admin_bp.route('/nodes/<int:node_id>/edit', methods=['GET', 'POST'])
@@ -491,92 +583,19 @@ def send_report_submit():
     )
     return redirect(url_for('admin.office'))
 
+from app.models import AuditLog
 
-# =========================================================
-# DELETE — Node
-# =========================================================
+# Add this to the bottom of app/routes/admin.py
 
-@admin_bp.route('/nodes/<int:node_id>/delete', methods=['POST'])
-@login_required
-@role_required('admin')
-def delete_node(node_id):
-    """
-    Delete a node and all its associated data:
-      - SensorData rows
-      - AnalysisLog rows
-      - Alert rows
-      - Node links (edges) in both directions
-      - Mine associations
-    """
-    from app.models import SensorData, AnalysisLog, Alert
-
-    node = Node.query.get_or_404(node_id)
-    node_name = node.name
-
-    # 1. Delete sensor readings
-    SensorData.query.filter_by(node_id=node.id).delete()
-
-    # 2. Delete analysis logs
-    AnalysisLog.query.filter_by(node_id=node.id).delete()
-
-    # 3. Delete alerts targeting this node (or triggered for it)
-    Alert.query.filter_by(node_id=node.id).delete()
-
-    # 4. Delete links where this node is either end
-    db.session.execute(
-        node_links.delete().where(
-            (node_links.c.from_node_id == node.id) |
-            (node_links.c.to_node_id == node.id)
-        )
-    )
-
-    # 5. Clear mine associations (removes rows from mine_nodes)
-    for m in list(node.mines):
-        node.mines.remove(m)
-
-    # 6. Delete the node itself
-    db.session.delete(node)
-    db.session.commit()
-
-    flash(f'Node "{node_name}" deleted.', 'success')
-    return redirect(url_for('admin.office'))
+@admin_bp.route('/audit-logs')
+def audit_logs():
+    """View the system audit logs (Admin only)."""
+    from app.models import AuditLog
+    
+    # Fetch the latest 200 logs, newest first
+    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(200).all()
+    
+    return render_template('audit_logs.html', logs=logs)
 
 
-# =========================================================
-# DELETE — Mine
-# =========================================================
 
-@admin_bp.route('/mines/<int:mine_id>/delete', methods=['POST'])
-@login_required
-@role_required('admin')
-def delete_mine(mine_id):
-    """
-    Delete a mine and all its associated data.
-    Nodes are NOT deleted — they're just detached from this mine
-    (they may belong to other mines too).
-    """
-    from app.models import AnalysisLog, Alert
-
-    mine = Mine.query.get_or_404(mine_id)
-    mine_name = mine.name
-
-    # 1. Delete analysis logs
-    AnalysisLog.query.filter_by(mine_id=mine.id).delete()
-
-    # 2. Delete alerts belonging to this mine
-    Alert.query.filter_by(mine_id=mine.id).delete()
-
-    # 3. Clear user assignments (removes rows from user_mines)
-    for u in list(mine.users):
-        u.mines.remove(mine)
-
-    # 4. Clear node associations (removes rows from mine_nodes)
-    for n in list(mine.nodes):
-        n.mines.remove(mine)
-
-    # 5. Delete the mine itself
-    db.session.delete(mine)
-    db.session.commit()
-
-    flash(f'Mine "{mine_name}" deleted.', 'success')
-    return redirect(url_for('admin.office'))

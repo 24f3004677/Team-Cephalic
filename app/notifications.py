@@ -417,3 +417,23 @@ def send_reports_for_mines(app, mine_ids, recipient_emails, hours=None):
 
     print(f"[MAIL] Manual report run queued — "
           f"{len(mine_ids)} mine(s), {len(recipient_emails)} recipient(s).")
+
+def _report_context(mine, hours):
+    from app.models import Alert
+    end   = datetime.utcnow()
+    start = end - timedelta(hours=hours)
+    alerts = (Alert.query
+              .filter(Alert.mine_id == mine.id,
+                      Alert.timestamp >= start,
+                      Alert.timestamp <= end)
+              .order_by(Alert.timestamp.desc())
+              .limit(30).all())
+    nodes = list(mine.nodes)
+    return {
+        'hours': hours, 'start': start, 'end': end, 'mine': mine,
+        'nodes_total': len(nodes),
+        'normal_count': sum(1 for n in nodes if n.current_status == 'normal'),
+        'attention_count': sum(1 for n in nodes if n.current_status == 'attention'),
+        'danger_count': sum(1 for n in nodes if n.current_status == 'danger'),
+        'alerts': alerts,
+    }

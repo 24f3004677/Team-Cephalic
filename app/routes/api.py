@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify, Response, current_app
 from app import db
 from app.models import Node, SensorData, AnalysisLog, Alert, Mine
 from datetime import datetime, timedelta, timezone
@@ -182,7 +182,7 @@ def _parse_range():
         start, end = end, start
 
     # Debug: log what we're about to use
-    print(f"[API] range={range_key} start={start} end={end}")
+    current_app.logger.info(f"[API] range={range_key} start={start} end={end}")
 
     return start, end
 
