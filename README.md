@@ -1,4 +1,4 @@
-
+<img width="956" height="511" alt="image" src="https://github.com/user-attachments/assets/e7e1dc2c-3994-4a67-b02e-f2156a133bf0" />
 
 <div align="center">
 
@@ -99,6 +99,14 @@ There is a critical need for a **low-latency, locally-intelligent, and network-i
 | 📧 **Automated Email Reports** | Manual report generation to selected mines and recipients |
 | 🔒 **Security Hardened** | CSRF protection, rate-limited login, password hashing, session security |
 | 🎨 **Modern Glassmorphism UI** | Premium look with frosted-glass cards and animated background |
+
+<img src="docs/Screenshot 2026-09-23 213543.png">
+
+<img src="docs/image.png">
+
+<img src="docs/Screenshot 2026-09-23 214303.png">
+
+<img src="docs/Screenshot 2026-09-23 214429.png">
 
 ---
 
@@ -381,86 +389,3 @@ All rights are reserved under the name of Cephalic and its contributers.
 
 
 ---
-
-## Where to Place This File
-
-Save it as `README.md` at the **root** of your GitHub repository — GitHub automatically renders it on the repository home page.
-
----
-
-## Optional Additions You Should Make
-
-To make the README even more compelling for judges, add these after the file is in place:
-
-### 1. Screenshots folder
-
-Create `docs/screenshots/` and add:
-- `dashboard.png` — main dashboard with mine cards
-- `node-detail.png` — node page with charts and AI panel
-- `mine-topology.png` — mine graph with connected nodes
-- `office.png` — admin office with tabs
-- `alert-banner.png` — red emergency banner
-
-Then insert this after the "Key Features" section:
-
-```markdown
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
-
-### Node Detail with Live AI Telemetry
-![Node Detail](docs/screenshots/node-detail.png)
-
-### Mine Topology
-![Mine Topology](docs/screenshots/mine-topology.png)
-```
-
-### 2. Demo video link
-
-After the badges row:
-
-```markdown
-[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red?style=for-the-badge)](https://youtu.be/YOUR_VIDEO_ID)
-```
-
-### 3. Architecture diagram image
-
-Upload your `system-architecture.png` to `docs/` and replace the ASCII diagram in the README with:
-
-
-![Architectur]("/architechture.jpeg")
-
-
-### 4. Requirements file
-
-Ensure `requirements.txt` exists with:
-
-```
-Flask>=3.0
-Flask-Login
-Flask-WTF
-Flask-Limiter
-Flask-Mail
-Flask-SQLAlchemy
-psycopg2-binary
-python-dotenv
-pyserial
-APScheduler
-tensorflow
-xgboost
-scikit-learn
-numpy
-pandas
-matplotlib
-seaborn
-joblib
-```
-
-### 5. LICENSE file
-
-Add a standard MIT License file at the root so the badge link works.
-
----
-
-The README above gives AICTE judges a **complete picture in under 3 minutes of reading** — problem, solution, architecture, AI novelty, tech stack, and setup. It also looks professional and gives credibility to the project. Replace the placeholders (team names, GitHub URL, demo video) with your real details before pushing.
