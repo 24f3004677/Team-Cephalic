@@ -104,110 +104,13 @@ There is a critical need for a **low-latency, locally-intelligent, and network-i
 
 ## System Architecture
 
-```
+<img src="docs/IMG-20260916-WA0022.jpg">
+<img src="docs/IMG-20260916-WA0021.jpg">
 
-┌───────────────────────────────────────────────────────────────────────┐
-│                         UNDERGROUND COAL MINE                         │
-│                                                                       │
-│   ┌──────────┐  ESP-NOW   ┌──────────┐  ESP-NOW   ┌──────────┐        │
-│   │ Node 1   │ ─────────► │ Node 2   │ ─────────► │ Node 3   │        │
-│   │ (ESP32)  │            │ (ESP32)  │            │ (ESP32)  │        │
-│   │  +BME    │            │  +BME    │            │  +BME    │        │
-│   │  +MPU    │            │  +MPU    │            │  +MPU    │        │
-│   │  +ToF    │            │  +ToF    │            │  +ToF    │        │
-│   └────┬─────┘            └─────┬────┘            └────┬─────┘        │
-│        │                        │                      │              │
-│        └────────────┬───────────┴────────────┬─────────┘              │
-│                     │                        │                        │
-│                     ▼                        ▼                        │
-│              ┌──────────────────────────────────┐                     │                          |              |     |                     |      |                     |
-│              │   ESP32 Gateway (Receiver)       │                     │                          |              |     |                     |      |                     |
-│              │   Aggregates all sensor packets  │                     │                          |              |     |                     |      |                     |
-│              └──────────────┬───────────────────┘                     │
-└─────────────────────────────┼─────────────────────────────────────────┘
-                              │ USB Serial (JSON)
-                              ▼
-                    ┌─────────────────────┐
-                    │  USB Serial Bridge  │
-                    │  (Python thread)    │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-        ┌──────────────────────────────────────────────┐
-        │          FLASK BACKEND (Team Cephalic)       │
-        │  ┌────────────────────────────────────────┐  │
-        │  │  AI/ML Engine (Background Thread)      │  │
-        │  │  • LSTM Autoencoder                    │  │
-        │  │  • Variational Autoencoder (VAE)       │  │
-        │  │  • GRU Forecaster                      │  │
-        │  │  • XGBoost Fusion + Statistical        │  │
-        │  └────────────────────────────────────────┘  │
-        │  ┌────────────────────────────────────────┐  │
-        │  │  REST API + Jinja Templates            │  │
-        │  └────────────────────────────────────────┘  │
-        └──────────────────────┬───────────────────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │    PostgreSQL       │
-                    │  (SensorData,       │
-                    │   AnalysisLog,      │
-                    │   Alert, Node,      │
-                    │   Mine, User)       │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-        ┌──────────────────────────────────────────────┐
-        │           WEB DASHBOARD (Browser)            │
-        │  • Live node status map                      │
-        │  • Sensor time-series charts                 │
-        │  • AI telemetry panel                        │
-        │  • Alerts & reports                          │
-        └──────────────────────────────────────────────┘
-```
 ---
 
 ## Data Flow Pipeline
-
-```
-Step 1   ESP32-S3 reads BME280, MPU6500, ToF every 2 seconds
-   │
-   ▼
-Step 2   Sensor packet broadcast over ESP-NOW to Gateway ESP32
-   │
-   ▼
-Step 3   Gateway prints JSON line over USB serial:
-         {"node_id":1,"temperature":24.5,"roof_convergence_cm":298.3,...}
-   │
-   ▼
-Step 4   serial_bridge.py reads JSON, writes rows to SensorData table
-   │
-   ▼
-Step 5   ml_engine.py (background thread, every 5s) queries recent
-         SensorData per node, builds 24-tick rolling window
-   │
-   ▼
-Step 6   StructuralAnomalyEngine.process_tick() runs inference:
-         ├── LSTM Autoencoder → reconstruction error (MSE)
-         ├── VAE               → latent reconstruction MSE
-         ├── GRU Forecaster    → trajectory prediction error
-         ├── XGBoost DL Fusion → combined DL risk (0/1/2)
-         └── XGBoost Statistical → ML track risk (0/1/2)
-   │
-   ▼
-Step 7   Decision matrix combines both tracks into ultimate score
-         │
-         ▼
-Step 8   Persistence:
-         • AnalysisLog row written
-         • Node.current_status updated
-         • Mine.current_status recomputed
-         • Alert created if score == 2 (danger)
-   │
-   ▼
-Step 9   Browser dashboard polls every 2s, updates colours, charts,
-         AI metrics, and shows emergency banner if any node is in danger
-```
+<img src="docs/IMG-20260922-WA0057.jpg">
 
 ---
 
@@ -288,21 +191,7 @@ All four models are loaded once at startup and run inference **every 5 seconds p
 
 ### Sensor Node (ESP32-S3)
 
-
-                    ┌──────────────────┐
-                    │   ESP32-S3       │
-                    │                  │
-     BME280 ────────┤ SDA (GPIO 8)     │
-     (I²C 0x76)     │ SCL (GPIO 9)     │
-                    │                  │
-     MPU6500 ───────┤ SDA (GPIO 8)     │
-     (I²C 0x68)     │ SCL (GPIO 9)     │
-                    │                  │
-     VL53L0X ───────┤ SDA (GPIO 8)     │
-     (I²C 0x29)     │ SCL (GPIO 9)     │
-                    │                  │
-                    │ GPIO 2 → LED     │
-                    └──────────────────┘
+<img src="docs/IMG-20260922-WA0060.jpg">
 
 
 ### Gateway ESP32
@@ -310,6 +199,8 @@ All four models are loaded once at startup and run inference **every 5 seconds p
 - Same ESP32 (or ESP32-S3)
 - Connected to a laptop/PC via USB
 - Receives ESP-NOW packets, prints JSON to serial
+
+<img src="docs/IMG-20260922-WA0059.jpg">
 
 ---
 
