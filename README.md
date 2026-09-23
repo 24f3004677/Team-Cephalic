@@ -177,11 +177,12 @@ All four models are loaded once at startup and run inference **every 5 seconds p
 - **VL53L0X / VL53L1X** — ToF(Time of flight) distance sensor for roof convergence
 - **ESP-NOW protocol** — peer-to-peer 2.4 GHz wireless
 - **IR-Sensor** - for detecting the fire.
-- **MQ-4**
-- **MQ-7**
-- **MQ-135**
-- **Piezo Electric Sensor**
-- **Ultrasonic Sensor**
+- **MQ-4** - detect the Methane (CNG) gas
+- **MQ-7** - detect the carbon monoxide (CO) gas
+- **MQ-135** - detect the gases like ammonia, benzene, sulfur, carbon dioxide, smoke, and other harmful gases
+- **Piezo Electric Sensor** - detecting the acoustic waves
+- **Ultrasonic Sensor** - for measuring the node-to-node distance.
+
 ### Hardware Programming
 - **Arduino IDE** — for compiling and flashing firmware to the ESP32-S3 
   sensor nodes and the ESP32 gateway and Edge deployment
