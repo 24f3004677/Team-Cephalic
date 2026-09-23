@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Send Report{% endblock %}
+{% block content %}
+<style>
+.card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+
+    /* Solid white glass — readable text guaranteed */
+    background: rgba(255, 255, 255, 0.78);
+
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    color: var(--ink);
+    z-index: 1;
+    padding: 20px;
+}
+
+/* Optional faint image behind the glass — kept very subtle */
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+
+    background-image: url('/static/img/node_map_3.jpg');
+    background-size: cover;
+    background-position: center;
+
+    opacity: 0.06;
+    z-index: -1;
+    pointer-events: none;
+}
+</style>
+
+<div class="card" style="padding:20px;border-radius: 20px;">
+<h1><i class="fas fa-paper-plane me-2 text-primary"></i>Send Report</h1>
+
+<form method="POST" action="{{ url_for('admin.send_report_submit') }}">
+
+    <!-- ============================================================ -->
+    <!-- MINES                                                        -->
+    <!-- ============================================================ -->
+    <div class="card mb-4">
+        <div class="card-header bg-white fw-bold">
+            <i class="fas fa-mine me-2 text-secondary"></i>1. Choose Mines
+        </div>
+        <div class="card-body">
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox"
+                       id="all_mines" name="all_mines" value="1"
+                       onchange="toggleMines()">
+                <label class="form-check-label fw-bold" for="all_mines">
+                    All mines ({{ mines|length }})
+                </label>
+            </div>
+
+            <div id="mine-list" class="row g-2">
+                {% for mine in mines %}
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="mine-{{ mine.id }}"
+                               name="mine_ids" value="{{ mine.id }}">
+                        <label class="form-check-label" for="mine-{{ mine.id }}">
+                            {{ mine.name }}
+                            <span class="badge
+                                {% if mine.current_status == 'danger' %}bg-danger
+                                {% elif mine.current_status == 'attention' %}bg-warning text-dark
+                                {% else %}bg-success{% endif %}">
+                                {{ mine.current_status }}
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- RECIPIENTS                                                   -->
+    <!-- ============================================================ -->
+    <div class="card mb-4">
+        <div class="card-header bg-white fw-bold">
+            <i class="fas fa-users me-2 text-secondary"></i>2. Choose Recipients
+        </div>
+        <div class="card-body">
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox"
+                       id="all_staff" name="all_staff" value="1"
+                       onchange="toggleStaff()">
+                <label class="form-check-label fw-bold" for="all_staff">
+                    All staff (admins + engineers + supervisors)
+                </label>
+            </div>
+
+            <div id="staff-list" class="row g-2">
+                {% for u in staff %}
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="user-{{ u.id }}"
+                               name="user_ids" value="{{ u.id }}">
+                        <label class="form-check-label" for="user-{{ u.id }}">
+                            {{ u.username }}
+                            <span class="badge bg-secondary">{{ u.role }}</span>
+                            <br>
+                            <small class="text-muted">{{ u.email }}</small>
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- OPTIONS                                                      -->
+    <!-- ============================================================ -->
+    <div class="card mb-4">
+        <div class="card-header bg-white fw-bold">
+            <i class="fas fa-cog me-2 text-secondary"></i>3. Options
+        </div>
+        <div class="card-body">
+            <label for="hours" class="form-label">Report window</label>
+            <select class="form-select" id="hours" name="hours" style="max-width: 320px;">
+                <option value="1">Last 1 hour</option>
+                <option value="4">Last 4 hours</option>
+                <option value="8" selected>Last 8 hours</option>
+                <option value="24">Last 24 hours</option>
+                <option value="168">Last 7 days</option>
+            </select>
+            <div class="form-text">
+                Each selected mine will get its own report email.
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACTIONS                                                      -->
+    <!-- ============================================================ -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"
+                onclick="return confirm('Send reports to the selected recipients?');">
+            <i class="fas fa-paper-plane"></i> Send Reports
+        </button>
+        <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+
+</form>
+</div>
+
+<script>
+function toggleMines() {
+    var all = document.getElementById('all_mines').checked;
+    document.querySelectorAll('#mine-list input[type=checkbox]').forEach(function (cb) {
+        cb.checked = false;
+        cb.disabled = all;
+    });
+}
+function toggleStaff() {
+    var all = document.getElementById('all_staff').checked;
+    document.querySelectorAll('#staff-list input[type=checkbox]').forEach(function (cb) {
+        cb.checked = false;
+        cb.disabled = all;
+    });
+}
+</script>
+{% endblock %}

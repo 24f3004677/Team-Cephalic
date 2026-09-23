@@ -7,26 +7,46 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="theme-color" content="#f6f9fe">
+
     <title>{% block title %}Mine Monitoring{% endblock %}</title>
 
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        href="/static/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
     <link
         rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
     >
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap"
+        href="/static/css/css2.css"
         rel="stylesheet"
     >
 
     {% block extra_css %}{% endblock %}
 
     <style>
+
+        /* =====================================================
+           DESIGN TOKENS
+        ===================================================== */
+
+        :root {
+            --ink: #16283c;
+            --ink-soft: #3d4f63;
+            --ink-muted: #5b6b7d;
+            --accent: #2563eb;
+            --accent-soft: #3b82f6;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-bg-strong: rgba(255, 255, 255, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.90);
+            --line: rgba(203, 213, 225, 0.80);
+            --shadow-soft: 0 8px 30px rgba(30, 60, 120, 0.08);
+            --shadow-lift: 0 16px 44px rgba(30, 60, 120, 0.13);
+        }
 
         * {
             box-sizing: border-box;
@@ -36,163 +56,511 @@
             scroll-behavior: smooth;
         }
 
+        /* =====================================================
+           SOOTHING ANIMATED BACKGROUND — pastel aurora
+        ===================================================== */
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f4f7fb;
+            background:
+                radial-gradient(1000px 650px at 90% -10%, rgba(125, 211, 252, 0.28), transparent 60%),
+                radial-gradient(900px 650px at -10% 30%,  rgba(196, 181, 253, 0.26), transparent 55%),
+                radial-gradient(900px 700px at 50% 115%,  rgba(153, 246, 228, 0.26), transparent 60%),
+                linear-gradient(160deg, #f7fafe 0%, #f1f5fc 55%, #eef1fa 100%);
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             margin: 0;
             padding-top: 76px;
+            position: relative;
+            overflow-x: hidden;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---- Ambient scene: drifting orbs + faint grid ---- */
+
+        .bg-scene {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.60;
+        }
+
+        .orb-sky {
+            width: 640px;
+            height: 640px;
+            top: -220px;
+            left: -180px;
+            background: radial-gradient(circle, rgba(125, 211, 252, 0.55), rgba(125, 211, 252, 0) 70%);
+            animation: drift-a 26s ease-in-out infinite;
+        }
+
+        .orb-lavender {
+            width: 720px;
+            height: 720px;
+            bottom: -280px;
+            right: -220px;
+            background: radial-gradient(circle, rgba(196, 181, 253, 0.50), rgba(196, 181, 253, 0) 70%);
+            animation: drift-b 30s ease-in-out infinite;
+        }
+
+        .orb-mint {
+            width: 520px;
+            height: 520px;
+            top: 38%;
+            left: 42%;
+            background: radial-gradient(circle, rgba(153, 246, 228, 0.45), rgba(153, 246, 228, 0) 70%);
+            animation: drift-c 34s ease-in-out infinite;
+        }
+
+        .orb-peach {
+            width: 420px;
+            height: 420px;
+            top: -120px;
+            right: 22%;
+            background: radial-gradient(circle, rgba(253, 216, 168, 0.40), rgba(253, 216, 168, 0) 70%);
+            animation: drift-b 36s ease-in-out infinite reverse;
+        }
+
+        @keyframes drift-a {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50%      { transform: translate3d(90px, 70px, 0) scale(1.10); }
+        }
+
+        @keyframes drift-b {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50%      { transform: translate3d(-80px, -60px, 0) scale(1.08); }
+        }
+
+        @keyframes drift-c {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50%      { transform: translate3d(-110px, 70px, 0) scale(1.14); }
+        }
+
+        /* Faint technical grid, fading toward the bottom */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(100, 116, 139, 0.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(100, 116, 139, 0.055) 1px, transparent 1px);
+            background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 35%, transparent 100%);
+            mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 35%, transparent 100%);
+        }
+
+        /* -----------------------------------------------------
+           OPTIONAL BACKGROUND SWAPS (no code changes needed)
+           1) Photo: add  <div class="bg-photo"></div>  inside .bg-scene
+           2) Video: add
+              <video class="bg-video" autoplay muted loop playsinline
+                     src="/static/video/ambient.mp4"></video>
+              inside .bg-scene
+        ----------------------------------------------------- */
+
+        .bg-photo {
+            position: absolute;
+            inset: 0;
+            background: url('/static/img/mine_bgm_1.jpg') center / cover no-repeat;
+            opacity: 1;
+        }
+
+        .bg-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.50;
+        }
+
+        /* Keep all real content above the background */
+        .navbar,
+        .container,
+        .footer {
+            position: relative;
+            z-index: 1;
         }
 
         .container {
             flex: 1;
         }
 
-        .navbar {
-            background: linear-gradient(135deg, #0b2b3f 0%, #1a4b62 100%);
-            height: 76px;
-            padding: 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 9999;
-        }
-
-        .navbar .container-fluid {
-            height: 76px;
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            margin-right: 35px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-        }
-
-        .logo {
-            width: 58px;
-            height: 58px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #28b8ed, #087bb5);
-            color: white;
-            font-size: 27px;
-            box-shadow: 0 8px 22px rgba(0, 130, 190, 0.35);
-        }
-
-        .brand-name {
-            color: #ffffff;
-            font-size: 1.55rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.80) !important;
-            transition: all 0.2s ease;
-            padding: 10px 14px !important;
-            border-radius: 8px;
-            white-space: nowrap;
-        }
-
-        .nav-link i {
-            margin-right: 6px;
-        }
-
-        .nav-link:hover {
-            transform: translateY(-2px);
-            color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .user-badge {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-
-        .user-badge:hover {
-            background: rgba(255, 255, 255, 0.22);
-        }
-
-        .user-badge i {
-            font-size: 1.1rem;
-        }
-
-        .role-badge {
-            background: rgba(255, 255, 255, 0.18);
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .navbar-toggler {
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: none;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
+        /* =====================================================
+                   NAVBAR — frosted white glass (glassmorphism)
+                ===================================================== */
+        
+                /* ---- glass design tokens ---- */
+                :root {
+                    --glass-bg:          rgba(255, 255, 255, 0.55);
+                    --glass-bg-strong:   rgba(255, 255, 255, 0.72);
+                    --glass-border:      rgba(255, 255, 255, 0.65);
+                    --glass-border-soft: rgba(148, 163, 184, 0.28);
+                    --glass-blur:        blur(28px) saturate(180%) brightness(1.06);
+                    --glass-shadow:      0 8px 32px rgba(30, 60, 120, 0.12);
+                    --glass-inner:       inset 0 1px 0 rgba(255, 255, 255, 0.90),
+                                         inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+        
+                    --ink:      #0f172a;
+                    --ink-soft: #475569;
+                    --accent:   #2563eb;
+                }
+        
+                .navbar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 76px;
+                    padding: 0;
+                    z-index: 9999;
+        
+                    /* translucent glass surface */
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.62) 0%,
+                        rgba(255, 255, 255, 0.40) 45%,
+                        rgba(255, 255, 255, 0.58) 100%
+                    );
+        
+                    /* the frosted effect */
+                    backdrop-filter: var(--glass-blur);
+                    -webkit-backdrop-filter: var(--glass-blur);
+        
+                    /* edge light + soft depth */
+                    border-bottom: 1px solid var(--glass-border);
+                    box-shadow: var(--glass-shadow), var(--glass-inner);
+        
+                    /* keeps the blur crisp on the edges */
+                    isolation: isolate;
+                }
+        
+                /* ---- diagonal sheen sweeping across the glass ---- */
+                .navbar::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    background: linear-gradient(
+                        115deg,
+                        rgba(255, 255, 255, 0.55) 0%,
+                        rgba(255, 255, 255, 0.10) 28%,
+                        rgba(255, 255, 255, 0.00) 55%,
+                        rgba(255, 255, 255, 0.22) 100%
+                    );
+                    opacity: 0.9;
+                    z-index: -1;
+                }
+        
+                /* ---- hairline bottom accent (glass rim) ---- */
+                .navbar::after {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    height: 1px;
+                    pointer-events: none;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0) 0%,
+                        rgba(255, 255, 255, 0.85) 50%,
+                        rgba(255, 255, 255, 0) 100%
+                    );
+                }
+        
+                .navbar .container-fluid {
+                    position: relative;
+                    height: 76px;
+                    display: flex;
+                    align-items: center;
+                }
+        
+                .navbar-brand {
+                    display: flex;
+                    align-items: center;
+                    text-decoration: none;
+                    margin-right: 35px;
+                }
+        
+                .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 13px;
+                }
+        
+                .logo {
+                    width: 58px;
+                    height: 58px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 14px;
+                    color: #fff;
+                    font-size: 27px;
+        
+                    background: linear-gradient(135deg, #38bdf8, #2563eb);
+                    border: 1px solid rgba(255, 255, 255, 0.45);
+                    box-shadow:
+                        0 8px 22px rgba(37, 99, 235, 0.30),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+                }
+        
+                .brand-name {
+                    color: var(--ink);
+                    font-size: 1.55rem;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    white-space: nowrap;
+                }
+        
+                /* ---- nav links: glass pills on hover ---- */
+                .nav-link {
+                    position: relative;
+                    font-weight: 500;
+                    font-size: 1rem;
+                    color: var(--ink-soft) !important;
+                    padding: 10px 14px !important;
+                    border-radius: 10px;
+                    white-space: nowrap;
+                    border: 1px solid transparent;
+                    transition: all 0.22s ease;
+                }
+        
+                .nav-link i {
+                    margin-right: 6px;
+                }
+        
+                .nav-link:hover {
+                    transform: translateY(-1px);
+                    color: #1d4ed8 !important;
+        
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.75),
+                        rgba(255, 255, 255, 0.45)
+                    );
+                    border-color: rgba(255, 255, 255, 0.75);
+                    backdrop-filter: blur(12px) saturate(160%);
+                    -webkit-backdrop-filter: blur(12px) saturate(160%);
+                    box-shadow:
+                        0 4px 14px rgba(37, 99, 235, 0.14),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+                }
+        
+                /* ---- user badge: small glass pill ---- */
+                .user-badge {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    font-size: 0.9rem;
+                    white-space: nowrap;
+                    color: var(--ink);
+                    border-radius: 50px;
+        
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.75),
+                        rgba(255, 255, 255, 0.45)
+                    );
+                    border: 1px solid rgba(255, 255, 255, 0.70);
+                    backdrop-filter: blur(14px) saturate(170%);
+                    -webkit-backdrop-filter: blur(14px) saturate(170%);
+                    box-shadow:
+                        0 4px 16px rgba(30, 60, 120, 0.10),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+                    transition: all 0.22s ease;
+                }
+        
+                .user-badge:hover {
+                    background: linear-gradient(
+                        135deg,
+                        rgba(255, 255, 255, 0.92),
+                        rgba(255, 255, 255, 0.68)
+                    );
+                    box-shadow:
+                        0 6px 20px rgba(30, 60, 120, 0.16),
+                        inset 0 1px 0 rgba(255, 255, 255, 1);
+                }
+        
+                .user-badge i {
+                    font-size: 1.1rem;
+                    color: var(--accent);
+                }
+        
+                /* ---- role badge: tinted glass chip ---- */
+                .role-badge {
+                    padding: 3px 10px;
+                    border-radius: 15px;
+                    font-size: 0.7rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+        
+                    color: #1d4ed8;
+                    background: linear-gradient(
+                        135deg,
+                        rgba(37, 99, 235, 0.16),
+                        rgba(56, 189, 248, 0.10)
+                    );
+                    border: 1px solid rgba(255, 255, 255, 0.60);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.70);
+                }
+        
+                /* ---- toggler: glass button ---- */
+                .navbar-toggler {
+                    border: 1px solid rgba(255, 255, 255, 0.70);
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.45);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+                    transition: all 0.2s ease;
+                }
+        
+                .navbar-toggler:hover {
+                    background: rgba(255, 255, 255, 0.70);
+                }
+        
+                .navbar-toggler:focus {
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+                    outline: none;
+                }
+        
+                /* ---- fallback for browsers without backdrop-filter ---- */
+                @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+                    .navbar {
+                        background: rgba(255, 255, 255, 0.94);
+                    }
+                    .user-badge,
+                    .navbar-toggler {
+                        background: rgba(255, 255, 255, 0.94);
+                    }
+                }
+        
+                /* ---- accessibility: respect reduced transparency ---- */
+                @media (prefers-reduced-transparency: reduce) {
+                    .navbar {
+                        background: rgba(255, 255, 255, 0.96);
+                        backdrop-filter: none;
+                        -webkit-backdrop-filter: none;
+                    }
+                }
+        /* =====================================================
+           FOOTER — frosted white glass
+        ===================================================== */
 
         .footer {
-            background: #ffffff;
-            border-top: 1px solid #e9ecef;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(150%);
+            -webkit-backdrop-filter: blur(16px) saturate(150%);
+            border-top: 1px solid var(--glass-border);
             padding: 20px 0;
             margin-top: 40px;
-            color: #6c757d;
+            color: var(--ink-muted);
             font-size: 0.9rem;
+            box-shadow: 0 -8px 30px rgba(30, 60, 120, 0.06);
         }
 
         .footer a {
-            color: #0d6efd;
+            color: var(--accent);
             text-decoration: none;
         }
 
+        /* =====================================================
+           CARDS — true light glassmorphism
+        ===================================================== */
+
         .card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0.55));
+            backdrop-filter: blur(16px) saturate(160%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+            color: var(--ink);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
 
         .card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border-color: #ffffff;
+            box-shadow: var(--shadow-lift), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
+        .card-header {
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.45) !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--ink);
+            border-top-left-radius: 18px !important;
+            border-top-right-radius: 18px !important;
+        }
+
+        /* Templates use .bg-white headers — keep them glass */
+        .card-header.bg-white {
+            background: rgba(255, 255, 255, 0.45) ;
+        }
+
+        /* Dashboard stat cards — vibrant frosted glass */
+        .card.bg-primary {
+            background: linear-gradient(140deg, rgba(59, 130, 246, 0.92), rgba(37, 99, 235, 0.85)) !important;
+            border: 1px solid rgba(59, 130, 246, 0.35) !important;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.22);
+        }
+
+        .card.bg-success {
+            background: linear-gradient(140deg, rgba(16, 185, 129, 0.90), rgba(5, 150, 105, 0.85)) !important;
+            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+            box-shadow: 0 12px 30px rgba(5, 150, 105, 0.22);
+        }
+
+        .card.bg-info {
+            background: linear-gradient(140deg, rgba(6, 182, 212, 0.90), rgba(2, 132, 199, 0.85)) !important;
+            border: 1px solid rgba(6, 182, 212, 0.35) !important;
+            box-shadow: 0 12px 30px rgba(2, 132, 199, 0.22);
+        }
+
+        .card.bg-warning {
+            background: linear-gradient(140deg, rgba(251, 191, 36, 0.92), rgba(245, 158, 11, 0.85)) !important;
+            border: 1px solid rgba(245, 158, 11, 0.40) !important;
+            box-shadow: 0 12px 30px rgba(245, 158, 11, 0.25);
+            color: #3b2b00 !important;
+        }
+
+        .card.bg-primary .card-subtitle,
+        .card.bg-success .card-subtitle,
+        .card.bg-info .card-subtitle {
+            color: rgba(255, 255, 255, 0.80) !important;
+        }
+
+        .card.bg-warning .card-subtitle {
+            color: rgba(59, 43, 0, 0.65) !important;
+        }
+
+        /* =====================================================
+           BUTTONS — refined gradient pills
+        ===================================================== */
+
         .btn {
-            border-radius: 40px;
+            border-radius: 999px;
             font-weight: 600;
-            padding: 8px 24px;
+            letter-spacing: 0.2px;
+            padding: 8px 22px;
+            transition: all 0.2s ease;
         }
 
         .btn-sm {
@@ -201,109 +569,262 @@
         }
 
         .btn-primary {
-            background: #0d6efd;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
         }
 
         .btn-primary:hover {
-            background: #0b5ed7;
-            transform: scale(1.02);
+            background: linear-gradient(135deg, #4f8ef7, #1d4ed8);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(37, 99, 235, 0.36);
         }
 
         .btn-success {
-            background: #198754;
+            background: linear-gradient(135deg, #10b981, #059669);
             border: none;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.26);
         }
 
         .btn-success:hover {
-            background: #157347;
+            filter: brightness(1.06);
+            color: #fff;
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: linear-gradient(135deg, #f43f5e, #e11d48);
             border: none;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(225, 29, 72, 0.26);
         }
 
         .btn-danger:hover {
-            background: #bb2d3b;
+            filter: brightness(1.06);
+            color: #fff;
+            transform: translateY(-1px);
         }
 
         .btn-warning {
-            background: #ffc107;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
             border: none;
-            color: #212529;
+            color: #3b2b00;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.28);
         }
 
         .btn-warning:hover {
-            background: #e0a800;
+            filter: brightness(1.05);
+            color: #3b2b00;
+            transform: translateY(-1px);
         }
+
+        .btn-secondary {
+            background: var(--glass-bg-strong);
+            border: 1px solid rgba(148, 163, 184, 0.40);
+            color: #334155;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: #ffffff;
+            border-color: rgba(148, 163, 184, 0.60);
+            color: #1e293b;
+        }
+
+        .btn-outline-primary {
+            color: #2563eb;
+            border: 1px solid rgba(37, 99, 235, 0.45);
+            background: rgba(255, 255, 255, 0.40);
+        }
+
+        .btn-outline-primary:hover {
+            background: rgba(37, 99, 235, 0.10);
+            border-color: #2563eb;
+            color: #1d4ed8;
+        }
+
+        /* =====================================================
+           TABLES — glass rows
+        ===================================================== */
 
         .table {
-            background: #ffffff;
-            border-radius: 12px;
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--ink);
+            --bs-table-border-color: var(--line);
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.95);
+            --bs-table-hover-color: var(--ink);
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
         }
 
-        .table th {
-            background: #f8fafc;
+        .table thead th {
+            background: rgba(241, 245, 251, 0.85);
+            color: #475569;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
+            font-size: 0.72rem;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid var(--line) !important;
+        }
+
+        .table tbody tr {
+            background: rgba(255, 255, 255, 0.55);
+            transition: background 0.15s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        /* =====================================================
+           FORMS — clean glass inputs
+        ===================================================== */
+
+        .form-label {
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.88rem;
         }
 
         .form-control,
         .form-select {
-            border-radius: 50px;
-            padding: 10px 20px;
-            border: 1px solid #dde1e6;
-            background: #ffffff;
-            transition: all 0.2s;
+            border-radius: 12px;
+            padding: 10px 16px;
+            border: 1px solid #d7e0ee;
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
         }
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+            border-color: #60a5fa;
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
-        .alert {
-            border-radius: 12px;
-            border: none;
+        .form-text {
+            color: var(--ink-muted);
         }
+
+        /* =====================================================
+           ALERTS — solid enough to read over any background
+        ===================================================== */
+        
+        .alert {
+            border-radius: 14px;
+            border: 1px solid transparent;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            font-weight: 500;
+            box-shadow: 0 6px 22px rgba(30, 60, 120, 0.10);
+        }
+        
+        .alert-success {
+            background: rgba(209, 250, 229, 0.95);      /* soft mint, near-opaque */
+            border-color: rgba(16, 185, 129, 0.55);
+            color: #064e3b;                              /* dark green text */
+        }
+        
+        .alert-danger {
+            background: rgba(254, 226, 226, 0.95);      /* soft rose */
+            border-color: rgba(220, 38, 38, 0.55);
+            color: #7f1d1d;
+        }
+        
+        .alert-warning {
+            background: rgba(254, 243, 199, 0.95);      /* soft amber */
+            border-color: rgba(217, 119, 6, 0.55);
+            color: #78350f;
+        }
+        
+        .alert-info {
+            background: rgba(224, 242, 254, 0.95);      /* soft sky */
+            border-color: rgba(2, 132, 199, 0.55);
+            color: #0c4a6e;
+        }
+        
+        /* Make the icon slightly bolder so it stands out */
+        .alert i {
+            font-weight: 600;
+        }
+        
+        /* Close button visibility */
+        .alert .btn-close {
+            opacity: 0.65;
+        }
+        
+        .alert .btn-close:hover {
+            opacity: 1;
+        }
+        /* =====================================================
+           BADGES
+        ===================================================== */
 
         .badge {
             padding: 5px 12px;
-            border-radius: 50px;
-            font-weight: 500;
+            border-radius: 999px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-shadow: 0 3px 10px rgba(30, 60, 120, 0.10);
         }
+
+        /* =====================================================
+           TABS
+        ===================================================== */
 
         .tab-pane {
             padding-top: 20px;
         }
 
+        .nav-tabs {
+            border-bottom: 1px solid var(--line);
+        }
+
         .nav-tabs .nav-link {
-            color: #495057 !important;
-            border-radius: 50px 50px 0 0;
+            color: #64748b !important;
+            border: 1px solid transparent;
+            border-radius: 12px 12px 0 0;
             font-weight: 500;
         }
 
-        .nav-tabs .nav-link.active {
-            background: #ffffff;
-            border-bottom: 3px solid #0d6efd;
-            color: #0d6efd !important;
+        .nav-tabs .nav-link:hover {
+            color: #2563eb !important;
+            background: rgba(255, 255, 255, 0.55);
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5 {
-            font-weight: 700;
-            color: #1a2c3e;
+        .nav-tabs .nav-link.active {
+            background: rgba(255, 255, 255, 0.90) !important;
+            color: #2563eb !important;
+            border: 1px solid var(--line);
+            border-bottom-color: #fff;
+            box-shadow: inset 0 -2px 0 #2563eb;
         }
+
+        /* =====================================================
+           HEADINGS & TEXT
+        ===================================================== */
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        .text-primary  { color: #2563eb !important; }
+        .text-muted    { color: var(--ink-muted) !important; }
 
         .section-header {
             display: flex;
@@ -320,24 +841,25 @@
             margin-right: 6px;
         }
 
-        .status-normal {
-            background: #198754;
-        }
+        .status-normal    { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+        .status-attention { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+        .status-danger    { background: #e11d48; box-shadow: 0 0 8px rgba(225, 29, 72, 0.5); }
 
-        .status-attention {
-            background: #ffc107;
-        }
-
-        .status-danger {
-            background: #dc3545;
-        }
+        /* =====================================================
+           MINE / NODE MAP — soft glass canvas
+        ===================================================== */
 
         #mines-map {
-            background-image:
-                linear-gradient(#ddd 1px, transparent 1px),
-                linear-gradient(90deg, #ddd 1px, transparent 1px);
-            background-size: 20px 20px;
-            border-radius: 12px;
+            /* To use a grid instead of a photo, replace the line below with:
+               linear-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px),
+               linear-gradient(90deg, rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+               and set background-size back to 24px 24px */
+            background-image: url('/static/img/mine_city_map_3.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border: 1px solid rgba(226, 232, 240, 0.90);
+            border-radius: 14px;
         }
 
         .mine-marker {
@@ -347,7 +869,7 @@
             border-radius: 50%;
             border: 2px solid #ffffff;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 14px rgba(30, 60, 120, 0.25);
             cursor: pointer;
             transition: transform 0.2s;
         }
@@ -363,9 +885,42 @@
             border-radius: 50%;
             border: 2px solid #ffffff;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(30, 60, 120, 0.22);
             cursor: pointer;
         }
+
+        /* =====================================================
+           SCROLLBAR / SELECTION / MOTION
+        ===================================================== */
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.45);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.65);
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        ::selection {
+            background: rgba(37, 99, 235, 0.18);
+            color: var(--ink);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .orb { animation: none !important; }
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
 
         @media (max-width: 991px) {
 
@@ -376,6 +931,7 @@
             .navbar {
                 height: auto;
                 min-height: 76px;
+                background: rgba(255, 255, 255, 0.80);
             }
 
             .navbar .container-fluid {
@@ -384,8 +940,14 @@
             }
 
             .navbar-collapse {
-                padding: 15px 0 20px 0;
-                background: linear-gradient(135deg, #0b2b3f, #1a4b62);
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.92);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                margin-top: 10px;
+                box-shadow: var(--shadow-lift);
             }
 
             .navbar-nav {
@@ -399,6 +961,12 @@
             .user-badge {
                 width: fit-content;
                 margin: 10px 0;
+            }
+
+            /* Reduce orb intensity on mobile for performance */
+            .orb {
+                opacity: 0.40;
+                filter: blur(70px);
             }
         }
 
@@ -426,27 +994,29 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <!-- Animated ambient background -->
+    <div class="bg-scene" aria-hidden="true">
+        <!-- To switch to video, comment out .bg-photo and uncomment:
+        <video class="bg-video" autoplay muted loop playsinline
+               src="/static/video/mine_vid_1.mp4"></video>
+        -->
+        <div class="bg-photo"></div>
+        <div class="orb orb-sky"></div>
+        <div class="orb orb-lavender"></div>
+        <div class="orb orb-mint"></div>
+        <div class="orb orb-peach"></div>
+        <div class="bg-grid"></div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light">
 
         <div class="container-fluid px-4">
 
-            <a
-                class="navbar-brand"
-                href="{{ url_for('main.dashboard') }}"
-            >
-
-                <div class="brand">
-
-                    <div class="logo">
-                        ⛏
-                    </div>
-
-                    <div class="brand-name">
-                        Bhu-Rakshak
-                    </div>
-
-                </div>
-
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <span class="brand">
+                    <span class="logo">⛏</span>
+                    <span class="brand-name">Bhu-Rakshak</span>
+                </span>
             </a>
 
             <button
@@ -458,82 +1028,41 @@
                 aria-expanded="false"
                 aria-label="Toggle navigation"
             >
-
                 <span class="navbar-toggler-icon"></span>
-
             </button>
 
-            <div
-                class="collapse navbar-collapse"
-                id="navbarNav"
-            >
+            <div class="collapse navbar-collapse" id="navbarNav">
 
                 {% if current_user.is_authenticated %}
 
                 <ul class="navbar-nav me-auto">
 
                     <li class="nav-item">
-
-                        <a
-                            class="nav-link"
-                            href="{{ url_for('main.dashboard') }}"
-                        >
-
-                            <i class="fas fa-home"></i>
-                            Dashboard
-
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                            <i class="fas fa-home"></i> Dashboard
                         </a>
-
                     </li>
 
                     {% if current_user.role == 'admin' %}
-
                     <li class="nav-item">
-
-                        <a
-                            class="nav-link"
-                            href="{{ url_for('admin.office') }}"
-                        >
-
-                            <i class="fas fa-building"></i>
-                            Office
-
+                        <a class="nav-link" href="{{ url_for('admin.office') }}">
+                            <i class="fas fa-building"></i> Office
                         </a>
-
                     </li>
-
                     {% endif %}
 
                     <li class="nav-item">
-
-                        <a
-                            class="nav-link"
-                            href="{{ url_for('main.logs') }}"
-                        >
-
-                            <i class="fas fa-clipboard-list"></i>
-                            Logs
-
+                        <a class="nav-link" href="{{ url_for('main.logs') }}">
+                            <i class="fas fa-clipboard-list"></i> Logs
                         </a>
-
                     </li>
 
                     {% if current_user.role in ['engineer', 'supervisor', 'admin'] %}
-
                     <li class="nav-item">
-
-                        <a
-                            class="nav-link"
-                            href="{{ url_for('main.send_alert') }}"
-                        >
-
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Send Alert
-
+                        <a class="nav-link" href="{{ url_for('main.send_alert') }}">
+                            <i class="fas fa-exclamation-triangle"></i> Send Alert
                         </a>
-
                     </li>
-
                     {% endif %}
 
                 </ul>
@@ -541,35 +1070,31 @@
                 <ul class="navbar-nav align-items-lg-center">
 
                     <li class="nav-item me-lg-3 mb-2 mb-lg-0">
-
                         <span class="user-badge">
-
                             <i class="fas fa-user-circle"></i>
-
-                            {{ current_user.username.title() }}
-
+                            {{ current_user.username|title }}
                             <span class="role-badge">
-                                {{ current_user.role.title() }}
+                                {{ current_user.role|title }}
                             </span>
-
                         </span>
-
                     </li>
 
                     <li class="nav-item">
-
-                        <a
-                            class="nav-link"
-                            href="{{ url_for('auth.logout') }}"
-                        >
-
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
-
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
-
                     </li>
 
+                </ul>
+
+                {% else %}
+
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
                 </ul>
 
                 {% endif %}
@@ -588,23 +1113,22 @@
 
                 {% for category, message in messages %}
 
+                    {# Normalize unknown/empty categories so 'alert-' is never rendered #}
+                    {% set level = category if category in ('success', 'danger', 'warning', 'info') else ('danger' if category == 'error' else 'info') %}
+                    {% set icon = {'success': 'check-circle', 'danger': 'times-circle', 'warning': 'exclamation-circle', 'info': 'info-circle'}[level] %}
+
                     <div
-                        class="alert alert-{{ category }} alert-dismissible fade show"
+                        class="alert alert-{{ level }} alert-dismissible fade show"
                         role="alert"
                     >
-
-                        <i
-                            class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}times-circle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"
-                        ></i>
-
+                        <i class="fas fa-{{ icon }} me-2"></i>
                         {{ message }}
-
                         <button
                             type="button"
                             class="btn-close"
                             data-bs-dismiss="alert"
+                            aria-label="Close"
                         ></button>
-
                     </div>
 
                 {% endfor %}
@@ -622,19 +1146,13 @@
         <div class="container text-center">
 
             <span>
-                &copy; Bhu-Rakshak
-                &mdash;
-                Intelligent Mine Safety &amp; Monitoring Platform
+                &copy; Bhu-Rakshak &mdash; Intelligent Mine Safety &amp; Monitoring Platform
             </span>
 
-            <span class="mx-3">
-                |
-            </span>
+            <span class="mx-3">|</span>
 
             <span>
-                Team Cephalic
-                &bull;
-                SIH Prototype
+                Team Cephalic &bull; SIH Prototype
             </span>
 
         </div>
@@ -642,7 +1160,7 @@
     </footer>
 
     <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        src="/static/js/bootstrap.bundle.min.js"
     ></script>
 
     {% block extra_js %}{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Edit Staff{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="fas fa-user-edit me-2 text-warning"></i>Edit Staff — {{ user.username }}
+            </div>
+            <div class="card-body">
+
+                <form method="POST">
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            Username <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="username"
+                               name="username" value="{{ user.username }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="email"
+                               name="email" value="{{ user.email }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">
+                            Phone <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="phone"
+                               name="phone" value="{{ user.phone or '' }}"
+                               placeholder="+919876543210">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="role" class="form-label">
+                            Role <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="engineer"
+                                {% if user.role == 'engineer' %}selected{% endif %}>
+                                Engineer
+                            </option>
+                            <option value="supervisor"
+                                {% if user.role == 'supervisor' %}selected{% endif %}>
+                                Supervisor
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            New Password
+                            <small class="text-muted">(leave blank to keep current)</small>
+                        </label>
+                        <input type="password" class="form-control" id="password"
+                               name="password" minlength="6"
+                               placeholder="Leave empty to keep current password">
+                    </div>
+
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Current status:</strong>
+                        {{ 'Blacklisted' if user.is_blacklisted else 'Active' }}
+                        &nbsp;·&nbsp;
+                        <strong>Mines assigned:</strong>
+                        {% if user.mines %}
+                            {% for m in user.mines %}{{ m.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        {% else %}
+                            none
+                        {% endif %}
+                        <br>
+                        <small class="text-muted">
+                            To change blacklist status or mine assignments, use the buttons on the Office page.
+                        </small>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update
+                        </button>
+                        <a href="{{ url_for('admin.office') }}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

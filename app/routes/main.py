@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort,jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models import Mine, Node, SensorData, AnalysisLog, Alert, User
@@ -83,15 +83,18 @@ def send_alert():
              #   abort(403)
             node.current_status = 'danger'
             db.session.add(node)
+            
             # Update all mines containing this node
             for mine in node.mines:
                 mine.update_status_from_nodes()
                 db.session.add(mine)
             alert = Alert(triggered_by_user_id=current_user.id,
-                          target_type='node', target_id=node.id,
-                          message=message, is_automatic=False,
-                          node_id=node.id
+                            target_type='node', target_id=node.id,
+                            message=message, is_automatic=False,
+                            node_id=node.id
             )
+            # NEW:
+            
         elif target_type == 'mine':
             mine_id = request.form.get('mine_id')
             if not mine_id:
@@ -107,9 +110,11 @@ def send_alert():
                 node.current_status = 'danger'
                 db.session.add(node)
             alert = Alert(triggered_by_user_id=current_user.id,
-                          target_type='mine', target_id=mine.id,
-                          message=message, is_automatic=False,
-                          mine_id=mine.id)
+                            target_type='mine', target_id=mine.id,
+                            message=message, is_automatic=False,
+                            mine_id=mine.id)
+            # NEW: notify once for the mine
+            
         else:
             flash('Invalid target type', 'danger')
             return redirect(url_for('main.send_alert'))

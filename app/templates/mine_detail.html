@@ -3,16 +3,42 @@
 {% block title %}{{ mine.name }} Details {% endblock %}
 
 {% block content %}
-
+<style>
+	.status-normal {
+	  background-image: linear-gradient(321deg, rgba(42, 123, 155, 1) 1%, rgba(255, 255, 255, 1) 45%, rgba(255, 255, 255, 1) 100%);
+	}
+	
+	.status-danger {
+	  background-image: linear-gradient(151deg,rgba(240, 108, 96, 1) 1%, rgba(255, 255, 255, 1) 45%, rgba(255, 255, 255, 1) 100%);
+	}
+	/* Add this to align the logo and text */
+	.header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Controls space between the logo box and the text */
+	}
+	
+	.logo {
+    width: 58px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    
+    font-size: 27px;
+        flex-shrink: 0; /* Prevents the logo from squishing on smaller screens */
+	}
+</style>
 <!-- ========================================= -->
 <!-- DANGER ALARM BANNER -->
 <!-- ========================================= -->
 
-<div id="danger-alert-banner" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none; position: sticky; top: 0; z-index: 1050; border-radius: 0; margin-bottom: 20px;">
-    <div class="container">
+<div id="danger-alert-banner" style="display: none; position: sticky; top: 0; z-index: 1050; border-radius: 0; margin-bottom: 20px;">
+    <div class="card"style="padding:30px;background-color:red;">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <div class="me-3">
+                <div class="me-3"><!--warnig triangle -->
                     <i class="fas fa-exclamation-triangle fa-2x" style="animation: pulse 1s ease-in-out infinite;"></i>
                 </div>
                 <div>
@@ -36,10 +62,12 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <h1>
-        <i class="fas fa-mine me-2 text-primary"></i>
+	<div>
+    <h1 class="text-info header-title">
+        <span class="logo">⛏️</span>
         {{ mine.name }}
     </h1>
+	</div>
 
     <span
         id="mine-status"
@@ -162,8 +190,8 @@
                     style="
                         position: relative;
                         width: 100%;
-                        height: 250px;
-                        background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+                        height: 250px;   
+                        background-image:url('/static/img/node_map_3.jpg');
                         border-radius: 8px;
                         overflow: hidden;
                         border: 2px solid #e0e6ed;
@@ -212,8 +240,8 @@
 
 <h2 class="mb-3">
 
-    <i class="fas fa-cubes me-2 text-primary"></i>
-    Nodes
+    <i class="fas fa-cubes me-2 text-white"></i>
+    <span class="text-white">Nodes</span>
 
 </h2>
 
@@ -224,7 +252,7 @@
     <div class="col-md-4">
 
         <div
-            class="card h-100 node-card {% if node.current_status == 'danger' %}border-danger border-3{% endif %}"
+            class="card h-100 node-card {% if node.current_status == 'danger' %}border-danger border-3 status-danger{% endif %}"
             data-node-id="{{ node.id }}"
             data-node-name="{{ node.name }}"
             data-status="{{ node.current_status }}">
@@ -281,19 +309,24 @@
                             type="hidden"
                             name="mine_id"
                             value="{{ mine.id }}">
-
-                        <button
-                            type="submit"
-                            class="btn btn-success btn-sm mark-fixed-btn"
-                            {% if node.current_status == 'normal' %}
-                                disabled
-                            {% endif %}>
-
-                            <i class="fas fa-check"></i>
-                            Fixed
-
-                        </button>
-
+                        {%if node.current_status == 'normal'%}
+	                        <button
+	                            type="submit"
+	                            class="btn btn-success btn-sm mark-fixed-btn"
+	                            {% if node.current_status == 'normal' %}
+	                                disabled
+	                            {% endif %}>
+	                            <i class="fas fa-check"></i>
+	                            Fixed
+	                        </button>
+						{%else%}
+							<button
+						        type="submit"
+						        class="btn btn-warning btn-sm mark-fixed-btn"
+						          <i class="fas fa-check"></i>
+						          Fix Now
+				            </button>
+						{%endif%}										
                     </form>
 
                 </div>
@@ -855,7 +888,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    console.log('🚀 Alarm system initialized with mixkit-alert-alarm-1005.wav');
+    console.log('Alarm system initialized with mixkit-alert-alarm-1005.wav');
 
 });
 
