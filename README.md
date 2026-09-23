@@ -176,6 +176,12 @@ All four models are loaded once at startup and run inference **every 5 seconds p
 - **MPU6500** — 6-axis accelerometer + gyroscope
 - **VL53L0X / VL53L1X** — ToF(Time of flight) distance sensor for roof convergence
 - **ESP-NOW protocol** — peer-to-peer 2.4 GHz wireless
+- **IR-Sensor** - for detecting the fire.
+- **MQ-4**
+- **MQ-7**
+- **MQ-135**
+- **Piezo Electric Sensor**
+- **Ultrasonic Sensor**
 ### Hardware Programming
 - **Arduino IDE** — for compiling and flashing firmware to the ESP32-S3 
   sensor nodes and the ESP32 gateway and Edge deployment
@@ -343,14 +349,14 @@ curl -X POST http://localhost:5000/api/sensor-data \
 | *Prem Karmakar* | Data Engineering,AI/ML Engineer |
 | *Shreya Saha Chowdhury* | Documentation,Circuit Designing |
 | *Sagnik Kundu* | Domain Expert (Mining Safety) |
-| *Priyam Prasad* | Project Lead, Full-Stack Development |
+| *Priyam Prasad* | Project Lead, Full-Stack Developer |
 
 
 
 ---
 
 ## License
-All rights are reserved under the name of Cephalic.
+All rights are reserved under the name of Cephalic and its contributers.
 
 ---
 
