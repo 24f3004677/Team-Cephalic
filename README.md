@@ -342,7 +342,7 @@ curl -X POST http://localhost:5000/api/sensor-data \
 | *Prem Karmakar* | Data Engineering,AI/ML Engineer |
 | *Shreya Saha Chowdhury* | Documentation,Circuit Designing |
 | *Sagnik Kundu* | Domain Expert (Mining Safety) |
-| *Priyam Prasad* | Project Lead |
+| *Priyam Prasad* | Project Lead | Full-Stack Developer |
 
 
 
