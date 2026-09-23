@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="card">
+<div style="max-width: 1200px; margin: 30px auto; padding: 0 20px; font-family: 'Inter', Arial, sans-serif;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">System Audit Logs</h1>
+        <a href="{{ url_for('admin.office') }}" style="padding: 8px 16px; background: #0f172a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">
+            &larr; Back to Office
+        </a>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">Timestamp</th>
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">Actor</th>
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">IP Address</th>
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">Action</th>
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">Target</th>
+                    <th style="padding: 14px 16px; text-align: left; font-weight: 600; color: #475569;">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 12px 16px; color: #64748b; white-space: nowrap;">
+                        {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </td>
+                    <td style="padding: 12px 16px; font-weight: 500; color: #1e293b;">
+                        {{ log.actor_name }}
+                    </td>
+                    <td style="padding: 12px 16px;">
+                        <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #475569;">{{ log.actor_ip }}</code>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                        {% set action_colors = {
+                            'CREATE': '#dcfce7; color: #166534',
+                            'UPDATE': '#dbeafe; color: #1e40af',
+                            'DELETE': '#fee2e2; color: #991b1b',
+                            'ALERT':  '#ffedd5; color: #9a3412',
+                            'FIX':    '#f3e8ff; color: #6b21a8'
+                        } %}
+                        <span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{ action_colors.get(log.action, '#f1f5f9; color: #475569') }};">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px 16px; color: #475569;">
+                        {% if log.target_type %}
+                            <span style="font-weight: 500;">{{ log.target_type }}</span>
+                            {% if log.target_id %}
+                                <span style="color: #94a3b8;">#{{ log.target_id }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #94a3b8;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px 16px; color: #334155; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.details }}">
+                        {{ log.details or '-' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="padding: 40px; text-align: center; color: #94a3b8; font-size: 16px;">
+                        No audit logs have been recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <p style="text-align: center; color: black; font-size: 12px; margin-top: 16px;">
+        Showing the latest {{ logs|length }} records.
+    </p>
+</div>
+</div>
+{% endblock %}
