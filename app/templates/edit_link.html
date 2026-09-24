@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Edit Node Link{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="fas fa-edit me-2 text-warning"></i>Edit Node Link
+            </div>
+            <div class="card-body">
+
+                <div class="alert alert-info small mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Editing the link between
+                    <strong>{{ from_id }}</strong> and
+                    <strong>{{ to_id }}</strong>.
+                    Change either endpoint and click Update.
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="from_node_id" class="form-label">
+                            From Node <span class="text-danger">*</span>
+                        </label>
+                        <select name="from_node_id" id="from_node_id"
+                                class="form-select" required>
+                            {% for node in nodes %}
+                            <option value="{{ node.id }}"
+                                {% if node.id == from_id %}selected{% endif %}>
+                                {{ node.name }} (ID: {{ node.id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="to_node_id" class="form-label">
+                            To Node <span class="text-danger">*</span>
+                        </label>
+                        <select name="to_node_id" id="to_node_id"
+                                class="form-select" required>
+                            {% for node in nodes %}
+                            <option value="{{ node.id }}"
+                                {% if node.id == to_id %}selected{% endif %}>
+                                {{ node.name }} (ID: {{ node.id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Link
+                        </button>
+                        <a href="{{ url_for('admin.list_links') }}"
+                           class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

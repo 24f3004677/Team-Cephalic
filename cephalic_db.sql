@@ -1,6 +1,17 @@
 
 
 
+
+
+-- update admin mail id
+UPDATE "user"
+SET email = 'sohamdip_santra@yahoo.com'
+WHERE id = 1;
+
+select * FROM "user"
+
+select * from mine
+
 select * from "user" as u where u.role='admin'
 select n.name as Node_name,* from sensor_data as sd , node as n  where (sd.node_id=n.id)
 select * from "user" as u
@@ -15,6 +26,8 @@ select * from alert
 select * from user_mines
 select * from node_links
 select * from user_mines
+
+select * from sensor_data
 
 
 -- for deleting the entier database 

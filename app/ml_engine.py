@@ -225,26 +225,30 @@ def _persist_result(app, result, node_id):
         # 3. Auto alert on danger (throttled)
         if score == 2:
             recent = (Alert.query
-                      .filter_by(node_id=node_id, is_automatic=True)
-                      .order_by(Alert.timestamp.desc())
-                      .first())
+                        .filter_by(node_id=node_id, is_automatic=True)
+                        .order_by(Alert.timestamp.desc())
+                        .first())
             ok = (recent is None
-                  or (datetime.utcnow() - recent.timestamp).total_seconds()
-                     > ALERT_COOLDOWN_SECS)
+                    or (datetime.utcnow() - recent.timestamp).total_seconds()
+                        > ALERT_COOLDOWN_SECS)
             if ok:
+                alert_msg = (f"AUTO: {text} detected by AI engine "
+                                f"(LSTM={telemetry.get('lstm_mse')}, "
+                                f"GRU={telemetry.get('gru_error')})")
                 db.session.add(Alert(
                     triggered_by_user_id=None,
                     target_type="node",
                     target_id=node_id,
-                    message=(f"AUTO: {text} detected by AI engine "
-                             f"(LSTM={telemetry.get('lstm_mse')}, "
-                             f"GRU={telemetry.get('gru_error')})"),
+                    message=alert_msg,
                     is_automatic=True,
                     node_id=node_id,
                     mine_id=mine_id,
                 ))
-
-        db.session.commit()
+                db.session.commit()
+            else:
+                db.session.commit()
+        else:
+            db.session.commit()
 
 
 # ---------------------------------------------------------------

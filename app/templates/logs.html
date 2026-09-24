@@ -1,7 +1,43 @@
 {% extends "base.html" %}
 {% block title %}Assignments Log{% endblock %}
 {% block content %}
-<h1><i class="fas fa-clipboard-list me-2 text-primary"></i>Mine Assignments</h1>
+<style>
+/* =====================================================
+   TITLE — gradient glass pill
+   ===================================================== */
+.title-glass {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 18px;
+    border-radius: 20px;
+
+    /* gradient background */
+    background: linear-gradient(
+        90deg,
+        rgba(2, 0, 36, 1) 0%,
+        rgba(9, 9, 121, 1) 35%,
+        rgba(0, 212, 255, 1) 100%
+    );
+
+    color: #ffffff;
+    font-size: 18pt;      /* adjust as needed */
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+
+    
+}
+
+
+
+/* icon — lighter so it stays visible on the dark side of the gradient */
+
+</style>
+
+<h2 class="title-glass">
+    <i class="fas fa-clipboard-list me-2"></i>Mine Assignments
+</h2>
+<br><br><br>
 
 <div class="row g-4">
     {% for mine in mines %}
@@ -11,10 +47,10 @@
                 <span><i class="fas fa-mine me-2"></i>{{ mine.name }}</span>
                 <span class="badge bg-secondary">{{ mine.users.count() }} assigned</span>
             </div>
-            <div class="card-body">
+            <div class="card-body" >
                 {% set users = mine.users.all() %}
                 {% if users %}
-                <ul class="list-group list-group-flush">
+                <ul class="list-group list-group-flush" style="border-radius: 20px;">
                     {% for user in users %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-user-circle me-2"></i>{{ user.username }}</span>
